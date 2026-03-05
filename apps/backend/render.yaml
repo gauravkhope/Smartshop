@@ -1,0 +1,77 @@
+services:
+  - type: web
+    name: smartshop-backend
+    env: node
+    plan: free  # Change to 'standard' or 'pro' for production
+    runtime: node
+    buildCommand: npm run build
+    startCommand: npm start
+    healthCheckPath: /
+    
+    # Auto-deploy from GitHub on push
+    autoDeploy: true
+    
+    # Set up environment variables
+    envVars:
+      # Database Configuration
+      - key: DATABASE_URL
+        scope: build,run
+        sync: false
+      
+      # Server Configuration
+      - key: PORT
+        value: "5000"
+      
+      - key: NODE_ENV
+        value: production
+      
+      # Security Keys (set in Render dashboard)
+      - key: JWT_SECRET
+        scope: build,run
+        sync: false
+      
+      # Email Configuration
+      - key: EMAIL_SERVICE
+        value: gmail
+      
+      - key: EMAIL_USER
+        scope: build,run
+        sync: false
+      
+      - key: EMAIL_PASSWORD
+        scope: build,run
+        sync: false
+      
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      
+      - key: SMTP_PORT
+        value: "587"
+      
+      - key: EMAIL_FROM_NAME
+        value: SmartShop
+      
+      # Frontend URL for email links
+      - key: FRONTEND_URL
+        sync: false
+      
+      # CORS Configuration - Update with your Vercel domain
+      - key: CORS_ORIGINS
+        sync: false
+      
+      # Optional Payment Gateway (if using)
+      # - key: RAZORPAY_KEY_ID
+      #   scope: build,run
+      #   sync: false
+    
+    # Disk size (adjust based on needs)
+    disk:
+      name: storage
+      mountPath: /uploads
+      sizeGB: 1
+
+# Cron jobs (optional)
+# crons:
+#   - id: backup-database
+#     schedule: 0 2 * * *
+#     command: npm run backup

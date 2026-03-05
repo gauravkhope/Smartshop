@@ -1,6 +1,6 @@
 // apps/frontend/lib/api.ts
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+import { API_URL } from "./config";
 
 // Get token safely (client-side only)
 function getAuthToken(): string | null {

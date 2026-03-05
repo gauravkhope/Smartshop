@@ -2,6 +2,7 @@
 
 import { NextApiRequest, NextApiResponse } from "next";
 import axios from "axios";
+import { API_BASE_URL } from "@/lib/config";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
@@ -15,10 +16,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const backendUrl =
-      process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-
-    const response = await axios.post(`${backendUrl}/api/verify-password`, {
+    const response = await axios.post(`${API_BASE_URL}/api/verify-password`, {
       userId,
       password,
     });

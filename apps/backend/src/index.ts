@@ -19,16 +19,53 @@ dotenv.config({ path: __dirname + "/../.env" });
 
 dotenv.config();
 
+// ====================================
+// CORS Configuration with Environment Support
+// ====================================
+const getCorsOrigins = (): string[] => {
+  const corsOriginsEnv = process.env.CORS_ORIGINS || "";
+  const origins: string[] = [];
+
+  // Add configured origins
+  if (corsOriginsEnv.trim()) {
+    origins.push(
+      ...corsOriginsEnv.split(",").map((origin) => origin.trim())
+    );
+  }
+
+  // Add local development origins if not in production
+  if (process.env.NODE_ENV !== "production") {
+    if (!origins.includes("http://localhost:3000")) {
+      origins.push("http://localhost:3000");
+    }
+    if (!origins.includes("http://localhost:3001")) {
+      origins.push("http://localhost:3001");
+    }
+  }
+
+  return origins;
+};
+
+const corsOrigins = getCorsOrigins();
+
 const app = express();
 
-app.use(cors({
-  origin: [
-    "http://localhost:3000",
-    "https://smartshop-one.vercel.app"
-  ],
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: corsOrigins.length > 0 ? corsOrigins : false,
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    maxAge: 86400, // 24 hours
+  })
+);
 app.use(express.json());
+
+// Log CORS configuration
+if (process.env.NODE_ENV !== "production") {
+  console.log("✅ CORS Origins configured:", corsOrigins);
+}
+
 // ✅ Serve uploaded images publicly
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 // Request logger middleware
@@ -93,6 +130,44 @@ app.post('/api/update-password', async (req: Request, res: Response) => {
     return res.status(500).json({ error: 'Server error' });
   }
 });
+
+// ====================================
+// ENVIRONMENT VALIDATION
+// ====================================
+const validateEnvironment = (): void => {
+  const requiredEnvVars = [
+    "DATABASE_URL",
+    "JWT_SECRET",
+    "EMAIL_USER",
+    "EMAIL_PASSWORD",
+  ];
+
+  const missingEnvVars = requiredEnvVars.filter((envVar) => !process.env[envVar]);
+
+  if (missingEnvVars.length > 0) {
+    console.error("❌ FATAL: Missing required environment variables:");
+    missingEnvVars.forEach((envVar) => {
+      console.error(`   - ${envVar}`);
+    });
+    console.error("\n   Please set these variables in your .env file");
+    process.exit(1);
+  }
+
+  // Validate JWT_SECRET strength
+  const jwtSecret = process.env.JWT_SECRET || "";
+  if (jwtSecret.length < 22) {
+    console.error(
+      "❌ FATAL: JWT_SECRET must be at least 22 characters long (preferably 32+)"
+    );
+    process.exit(1);
+  }
+
+  if (process.env.NODE_ENV !== "production") {
+    console.log("✅ All required environment variables are set");
+  }
+};
+
+validateEnvironment();
 
 // Start the server and handle errors
 const PORT = process.env.PORT || 5000;

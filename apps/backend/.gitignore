@@ -1,5 +1,33 @@
-node_modules
-# Keep environment variables out of version control
-.env
+node_modules/
 
+# Environment Variables - NEVER commit these
+.env
+.env.local
+.env.*.local
+.env.production.local
+
+# Build output
+dist/
+build/
 /generated/prisma
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Uploads directory (local testing only)
+uploads/
+
+# Testing
+coverage/
+.jest/

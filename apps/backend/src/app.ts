@@ -6,14 +6,50 @@ import authRoutes from "./routes/authRoutes";
 import userRoutes from "./routes/userRoutes";
 import orderRoutes from "./routes/orderRoutes";
 import paymentRoutes from "./routes/paymentRoutes";
-import profileRoutes from "./routes/profile"; // ✅ NEW IMPORT
+import profileRoutes from "./routes/profile";
 
 dotenv.config();
 
 const app: Application = express();
 
-// ✅ CORS setup for frontend ports
-app.use(cors({ origin: ["http://localhost:3000", "http://localhost:3001"] }));
+// ====================================
+// CORS setup with environment support
+// ====================================
+const getCorsOrigins = (): string[] => {
+  const corsOriginsEnv = process.env.CORS_ORIGINS || "";
+  const origins: string[] = [];
+
+  // Add configured origins from environment
+  if (corsOriginsEnv.trim()) {
+    origins.push(
+      ...corsOriginsEnv.split(",").map((origin) => origin.trim())
+    );
+  }
+
+  // Add local development origins if not in production
+  if (process.env.NODE_ENV !== "production") {
+    if (!origins.includes("http://localhost:3000")) {
+      origins.push("http://localhost:3000");
+    }
+    if (!origins.includes("http://localhost:3001")) {
+      origins.push("http://localhost:3001");
+    }
+  }
+
+  return origins;
+};
+
+const corsOrigins = getCorsOrigins();
+
+// Apply CORS middleware
+app.use(
+  cors({
+    origin: corsOrigins.length > 0 ? corsOrigins : false,
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
 // ✅ Enable JSON parsing
 app.use(express.json());

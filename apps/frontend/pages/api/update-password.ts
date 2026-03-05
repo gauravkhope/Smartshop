@@ -1,6 +1,7 @@
 // apps/frontend/pages/api/update-password.ts
 import { NextApiRequest, NextApiResponse } from "next";
 import axios from "axios";
+import { API_BASE_URL } from "@/lib/config";
 
 export default async function handler(
   req: NextApiRequest,
@@ -19,11 +20,7 @@ export default async function handler(
   }
 
   try {
-    const backendURL =
-      process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ||
-      "http://localhost:5000";
-
-    const url = `${backendURL}/api/update-password`;
+    const url = `${API_BASE_URL}/api/update-password`;
 
     const response = await axios.post(url, {
       userId,
