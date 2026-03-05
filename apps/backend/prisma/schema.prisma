@@ -1,0 +1,136 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int              @id @default(autoincrement())
+  name          String
+  email         String           @unique
+  password      String?
+  avatar     String? 
+  role          Role             @default(CUSTOMER)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  orders        Order[]          @relation("UserOrders")
+  Review        Review[]
+  loginHistory  LoginHistory[]
+  passwordReset PasswordReset[]
+  otp           String?
+  otpExpiry     DateTime?
+  isVerified    Boolean          @default(false)
+}
+
+model Product {
+  id          Int         @id @default(autoincrement())
+  name        String
+  description String
+  price       Float
+  mainCategory String?  
+  category    String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  brand       String?
+  image       String
+  orderItems  OrderItem[]
+  Review      Review[]
+}
+
+model Order {
+  id              Int         @id @default(autoincrement())
+  userId          Int
+  totalAmount     Float
+  paymentStatus   String      @default("pending")
+  paymentMethod   String      @default("card")
+  orderStatus     String      @default("processing")
+  shippingAddress String
+  shippingCity    String
+  shippingState   String
+  shippingZip     String
+  shippingCountry String      @default("India")
+  phone           String
+  email           String
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  user            User        @relation("UserOrders", fields: [userId], references: [id])
+  items           OrderItem[]
+}
+
+model OrderItem {
+  id        Int      @id @default(autoincrement())
+  orderId   Int
+  productId Int
+  quantity  Int
+  price     Float
+  createdAt DateTime @default(now())
+  order     Order    @relation(fields: [orderId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+}
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  content   String
+  rating    Int
+  userId    Int
+  productId Int
+  createdAt DateTime @default(now())
+  Product   Product  @relation(fields: [productId], references: [id])
+  User      User     @relation(fields: [userId], references: [id])
+}
+
+model LoginHistory {
+  id              Int       @id @default(autoincrement())
+  userId          Int
+  ipAddress       String?
+  userAgent       String?
+  device          String?
+  browser         String?
+  location        String?
+  loginAt         DateTime  @default(now())
+  logoutAt        DateTime?
+  sessionDuration Int?
+  user            User      @relation(fields: [userId], references: [id])
+}
+
+model PasswordReset {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  used      Boolean  @default(false)
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Payment {
+  id             String   @id @default(uuid())
+  orderId        String
+  provider       String   // fake_gateway | stripe | razorpay (future)
+  providerId     String   @unique // fake_card_xxx | fake_upi_xxx | fake_wallet_xxx
+  method         String   // card | upi | wallet
+  amount         Int      // Amount in smallest currency unit (paise for INR)
+  currency       String   @default("INR")
+  status         String   @default("pending") // pending | succeeded | failed | cancelled | refunded
+  metadata       Json?    // Store provider-specific data
+  idempotencyKey String?  @unique // Prevent duplicate payment creation
+  clientSecret   String?  // For client-side confirmation (card payments)
+  deeplink       String?  // For UPI/Wallet redirects
+  errorMessage   String?  // Store failure reasons
+  confirmedAt    DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([status])
+  @@index([providerId])
+}
+
+enum Role {
+  ADMIN
+  SELLER
+  CUSTOMER
+}
