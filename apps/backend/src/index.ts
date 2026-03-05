@@ -175,15 +175,16 @@ validateEnvironment();
 async function runMigrations(): Promise<void> {
   if (process.env.NODE_ENV === "production") {
     console.log("🔄 Running database migrations...");
+    const { execSync } = require("child_process");
+    
     try {
-      const { execSync } = require("child_process");
       execSync("npx prisma migrate deploy", { stdio: "inherit" });
       console.log("✅ Database migrations completed successfully");
     } catch (error) {
       console.error("❌ Migration failed:", error);
       console.log("⚠️  Attempting to push schema instead...");
       try {
-        execSync("npx prisma db push", { stdio: "inherit" });
+        execSync("npx prisma db push --accept-data-loss", { stdio: "inherit" });
         console.log("✅ Database schema pushed successfully");
       } catch (pushError) {
         console.error("❌ Schema push also failed. Starting server anyway...");
