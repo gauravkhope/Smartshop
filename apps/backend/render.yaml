@@ -4,7 +4,7 @@ services:
     env: node
     plan: free  # Change to 'standard' or 'pro' for production
     runtime: node
-    buildCommand: npm run build
+    buildCommand: npm install && npx prisma generate && npm run build
     startCommand: npm start
     healthCheckPath: /
     
