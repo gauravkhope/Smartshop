@@ -1,4 +1,5 @@
 "use client";
+import { Suspense } from "react";
 import React, { useEffect, useState, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -45,7 +46,17 @@ const ShimmerCard = () => (
   </div>
 );
 
-export default function AllProductsPage() {
+
+
+export default function Page() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AllProductsPage />
+    </Suspense>
+  );
+}
+
+function AllProductsPage() {
   const searchParams = useSearchParams();
   const { addToCart, isInCart } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
