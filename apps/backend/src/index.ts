@@ -21,7 +21,13 @@ dotenv.config();
 
 const app = express();
 
-app.use(cors({ origin: ["http://localhost:3000", "http://localhost:3001"] }));
+app.use(cors({
+  origin: [
+    "http://localhost:3000",
+    "https://smartshop-one.vercel.app"
+  ],
+  credentials: true
+}));
 app.use(express.json());
 // ✅ Serve uploaded images publicly
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
