@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, Suspense } from "react";
 import homepageData from "@/data/homepageData";
 import ProductCard from "@/components/ProductCard";
 import { useParams, useSearchParams } from "next/navigation";
@@ -17,6 +17,14 @@ const keyMap: Record<string, keyof typeof homepageData> = {
 };
 
 export default function CategoryProductsPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <CategoryProductsContent />
+    </Suspense>
+  );
+}
+
+function CategoryProductsContent() {
   const params = useParams<{ category: string }>();
   const search = useSearchParams();
   const category = (params?.category || "").toString().toLowerCase();

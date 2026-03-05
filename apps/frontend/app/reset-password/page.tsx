@@ -1,12 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
+"use client";
+
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Lock, Eye, EyeOff, ArrowLeft, Mail } from "lucide-react";
 import toast from "react-hot-toast";
 
-export default function ResetPasswordPage() {
+export default function Page() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ResetPasswordPage />
+    </Suspense>
+  );
+}
+
+function ResetPasswordPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const emailFromUrl = searchParams ? searchParams.get("email") || "" : "";
