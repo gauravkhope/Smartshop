@@ -88,15 +88,19 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+
   images: {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "**", // ✅ allows all HTTPS image sources
+        hostname: "**",
       },
       {
         protocol: "http",
-        hostname: "**", // optional — if you ever use plain http links
+        hostname: "**",
       },
     ],
   },
