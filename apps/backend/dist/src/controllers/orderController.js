@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getAllOrders = exports.updateOrderStatus = exports.getOrderById = exports.getUserOrders = exports.createOrder = void 0;
+exports.cancelOrder = exports.getAllOrders = exports.updateOrderStatus = exports.getOrderById = exports.getUserOrders = exports.createOrder = void 0;
 const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
 // Create a new order
@@ -220,3 +220,51 @@ const getAllOrders = async (req, res) => {
     }
 };
 exports.getAllOrders = getAllOrders;
+// Cancel an order
+const cancelOrder = async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        if (!orderId) {
+            return res.status(400).json({ error: "Order ID is required" });
+        }
+        // Fetch the order first
+        const order = await prisma.order.findUnique({
+            where: { id: parseInt(orderId) },
+            include: {
+                items: { include: { product: true } },
+                user: { select: { id: true, name: true, email: true } },
+            },
+        });
+        if (!order) {
+            return res.status(404).json({ error: "Order not found" });
+        }
+        // Prevent cancelling delivered/cancelled orders
+        if (order.orderStatus === "delivered") {
+            return res.status(400).json({ error: "Delivered order cannot be cancelled" });
+        }
+        if (order.orderStatus === "cancelled") {
+            return res.status(400).json({ error: "Order is already cancelled" });
+        }
+        // Update order status
+        const cancelledOrder = await prisma.order.update({
+            where: { id: parseInt(orderId) },
+            data: {
+                orderStatus: "cancelled",
+                paymentStatus: "refunded", // optional
+            },
+            include: {
+                items: { include: { product: true } },
+                user: { select: { id: true, name: true, email: true } },
+            },
+        });
+        return res.status(200).json({
+            message: "Order cancelled successfully",
+            order: cancelledOrder,
+        });
+    }
+    catch (error) {
+        console.error("❌ Cancel order error:", error);
+        res.status(500).json({ error: "Failed to cancel order" });
+    }
+};
+exports.cancelOrder = cancelOrder;

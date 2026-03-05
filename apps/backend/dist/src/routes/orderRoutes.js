@@ -16,4 +16,6 @@ router.get("/user/:userId", orderController_1.getUserOrders);
 router.get("/:orderId", orderController_1.getOrderById);
 // Update order status
 router.patch("/:orderId/status", orderController_1.updateOrderStatus);
+// Cancel an order
+router.patch("/:orderId/cancel", orderController_1.cancelOrder);
 exports.default = router;

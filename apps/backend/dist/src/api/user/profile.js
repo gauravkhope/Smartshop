@@ -18,6 +18,7 @@ const getUserProfile = async (req, res) => {
                 name: true,
                 email: true,
                 role: true,
+                avatar: true,
                 createdAt: true,
             },
         });
@@ -32,40 +33,45 @@ const getUserProfile = async (req, res) => {
     }
 };
 exports.getUserProfile = getUserProfile;
-// Update user profile
+// Update user profile (with avatar support)
 const updateUserProfile = async (req, res) => {
     try {
         if (!req.user) {
             return res.status(401).json({ message: "Unauthorized" });
         }
         const { name, email } = req.body;
-        // Validate input
+        let avatar = req.body.avatar;
+        // ✅ If file uploaded, replace avatar path
+        if (req.file) {
+            avatar = `/uploads/${req.file.filename}`;
+        }
+        // Validate name
         if (!name || name.trim().length < 2) {
             return res
                 .status(400)
-                .json({ message: "Name must be at least 2 characters" });
+                .json({ message: "Name must be at least 2 characters long" });
         }
-        // Check if email is already taken by another user
+        // Check if email already exists for another user
         if (email && email !== req.user.email) {
-            const existingUser = await prisma_1.default.user.findUnique({
-                where: { email },
-            });
+            const existingUser = await prisma_1.default.user.findUnique({ where: { email } });
             if (existingUser) {
                 return res.status(400).json({ message: "Email already in use" });
             }
         }
-        // Update user
+        // ✅ Update user in database
         const updatedUser = await prisma_1.default.user.update({
             where: { id: req.user.id },
             data: {
                 name: name.trim(),
                 ...(email && { email }),
+                ...(avatar && { avatar }),
             },
             select: {
                 id: true,
                 name: true,
                 email: true,
                 role: true,
+                avatar: true,
             },
         });
         return res.status(200).json({

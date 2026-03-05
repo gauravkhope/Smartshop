@@ -11,12 +11,15 @@ const prisma = new client_1.PrismaClient();
  * ✅ GET ALL PRODUCTS (Limited to 100 for performance)
  * Example: /api/products
  */
+// GET ALL PRODUCTS (Limited to 100 for performance)
 router.get("/", async (req, res) => {
     try {
-        // ✅ Use Prisma Raw Query to fetch all rows — bypass ORM limits
-        const products = await prisma.$queryRawUnsafe(`SELECT * FROM "Product" ORDER BY "id" ASC`);
+        // Fetch all products (no limit)
+        const products = await prisma.product.findMany({
+            orderBy: { id: "asc" }
+        });
         console.log(`✅ Total fetched products: ${products.length}`);
-        res.json(products);
+        res.json({ products });
     }
     catch (error) {
         console.error("❌ Error fetching all products:", error);
@@ -30,23 +33,63 @@ router.get("/", async (req, res) => {
 router.get("/category/:category", async (req, res) => {
     try {
         const { category } = req.params;
+        const { page = "1", limit = "24" } = req.query;
         const normalizedCategory = category.trim().toLowerCase();
-        const products = await prisma.product.findMany({
-            where: {
-                category: {
-                    contains: normalizedCategory,
-                    mode: "insensitive",
-                },
-            },
-            orderBy: { id: "desc" },
-            take: 10,
-        });
-        if (products.length === 0) {
-            return res.status(404).json({
-                message: `No products found for category '${category}'.`,
+        const pageNum = Math.max(parseInt(page) || 1, 1);
+        const pageSize = Math.min(Math.max(parseInt(limit) || 24, 1), 100); // cap at 100
+        const skip = (pageNum - 1) * pageSize;
+        // Build flexible synonym set to match plural/singular, spaces, and related terms.
+        const synonymMap = {
+            mobiles: ["mobile", "mobiles", "smartphone", "smartphones", "phone", "phones"],
+            laptops: ["laptop", "laptops", "notebook", "notebooks"],
+            appliances: ["appliance", "appliances", "home appliance", "home appliances", "kitchen appliance", "kitchen appliances"],
+            clothes: ["clothes", "clothing", "apparel", "fashion", "garments"],
+            footwear: ["footwear", "shoe", "shoes", "sneaker", "sneakers", "sandal", "sandals"],
+            trending: ["trending"], // likely no direct DB match; will fallback
+        };
+        const synonyms = synonymMap[normalizedCategory] || [normalizedCategory];
+        // Prisma OR conditions for both category and mainCategory fields.
+        // Use correct QueryMode enum for Prisma
+        const queryMode = "insensitive";
+        const orConditions = synonyms.flatMap((term) => [
+            { category: { contains: term, mode: queryMode } },
+            { mainCategory: { contains: term, mode: queryMode } },
+        ]);
+        // If no synonyms found (custom category), still attempt direct match.
+        if (orConditions.length === 0) {
+            orConditions.push({ category: { contains: normalizedCategory, mode: "insensitive" } });
+        }
+        // Perform count & paged query.
+        const [total, products] = await Promise.all([
+            prisma.product.count({ where: { OR: orConditions } }),
+            prisma.product.findMany({
+                where: { OR: orConditions },
+                orderBy: { id: "desc" },
+                skip,
+                take: pageSize,
+            }),
+        ]);
+        // Fallback: if no products matched synonyms (e.g. "trending" not stored), return a random slice so page isn't empty.
+        let finalProducts = products;
+        if (finalProducts.length === 0 && normalizedCategory === "trending") {
+            finalProducts = await prisma.product.findMany({
+                orderBy: { id: "desc" },
+                take: pageSize,
+                skip,
             });
         }
-        res.json(products);
+        console.log(`🔎 Category lookup: input="${category}" normalized="${normalizedCategory}" synonyms=[${synonyms.join(",")}] matched=${finalProducts.length} total=${total}`);
+        return res.json({
+            data: finalProducts,
+            meta: {
+                total, // total before fallback
+                page: pageNum,
+                limit: pageSize,
+                hasMore: skip + finalProducts.length < total,
+                category: normalizedCategory,
+                synonyms,
+            },
+        });
     }
     catch (error) {
         console.error("❌ Error fetching category products:", error);
