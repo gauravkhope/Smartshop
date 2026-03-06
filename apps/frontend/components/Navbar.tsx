@@ -112,14 +112,54 @@ export default function Navbar() {
   };
 
   return (
-    <nav data-testid="navbar" className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-md transition-all duration-300">
-      <div className="max-w-7xl mx-auto flex items-center justify-between px-1 md:px-2 py-3">
-        {/* LEFT */}
-        <div className="flex items-center gap-2 md:gap-3">
-          <ShoppingCart className="text-indigo-600 w-6 h-6" />
+    <>
+      <style>{`
+        @keyframes floatingGradient {
+          0% {
+            background-position: 0% 50%;
+          }
+          25% {
+            background-position: 100% 50%;
+          }
+          50% {
+            background-position: 50% 100%;
+          }
+          75% {
+            background-position: 100% 0%;
+          }
+          100% {
+            background-position: 0% 50%;
+          }
+        }
+        
+        .animate-gradient-logo {
+          background: linear-gradient(
+            -45deg,
+            #8B0000, #A00000, #B71C1C, #C62828, #D32F2F, #E53935, #F44336, #EF5350, #E57373, #EF9A9A, #FFCDD2, #FFEBEE,
+            #E65100, #EF6C00, #F57C00, #FB8C00, #FF6F00, #FF8A65, #FF9800, #FFA726, #FFB74D, #FFCC80, #FFE0B2, #FFF3E0,
+            #AD1457, #C2185B, #D81B60, #E91E63, #EC407A, #F06292, #F48FB1, #F8BBD0, #FF69B4, #FF85C1, #FFC0CB, #FFE4E1,
+            #8B0000
+          );
+          background-size: 600% 600%;
+          animation: floatingGradient 8s ease-in-out infinite;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+      `}</style>
+      <nav data-testid="navbar" className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-md transition-all duration-300">
+        <div className="max-w-7xl mx-auto flex items-center justify-between px-2 sm:px-3 md:px-4 lg:px-6 py-2 sm:py-3 gap-2 sm:gap-3 md:gap-4 lg:gap-6">
+          {/* LEFT */}
+          <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3">
+          <div className="relative p-2 sm:p-2.5 md:p-3 rounded-2xl bg-gradient-to-br from-violet-100 via-purple-100 to-fuchsia-100 dark:from-violet-900/30 dark:via-purple-900/30 dark:to-fuchsia-900/30 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 border-2 border-purple-200/50 dark:border-purple-700/50 animate-pulse">
+            <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-purple-600 dark:text-purple-400" style={{
+              filter: "drop-shadow(0 2px 6px rgba(147, 51, 234, 0.4))"
+            }} />
+            <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-purple-400/20 to-pink-400/20 blur-sm -z-10"></div>
+          </div>
           <h1
             data-testid="navbar-logo"
-            className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-pink-500 via-orange-400 to-red-500 bg-clip-text text-transparent"
+            className="text-lg sm:text-xl md:text-4xl lg:text-4xl font-extrabold animate-gradient-logo"
             style={{
               WebkitBackgroundClip: "text",
               color: "transparent",
@@ -132,17 +172,17 @@ export default function Navbar() {
 
         {/* CENTER + Profile */}
         <div className="flex-1 flex flex-col md:flex-row md:justify-center md:items-center">
-          <div ref={searchRef} className="md:relative md:flex w-full max-w-2xl">
+          <div ref={searchRef} className="flex md:relative w-full max-w-xs sm:max-w-sm md:max-w-xl lg:max-w-3xl">
             <form
               onSubmit={handleSearch}
-              className="flex items-center bg-gradient-to-r from-pink-500 via-orange-400 to-red-500 bg-opacity-20 rounded-[4rem] px-2 md:px-4 py-2 w-full"
+              className="flex items-center bg-gradient-to-r from-pink-500 via-orange-400 to-red-500 bg-opacity-20 rounded-[4rem] px-1.5 sm:px-2 md:px-3 lg:px-4 py-1.5 sm:py-2 w-full gap-1 sm:gap-2"
               style={{
                 background:
                   "linear-gradient(90deg, rgba(236,72,153,0.2) 0%, rgba(251,146,60,0.2) 50%, rgba(239,68,68,0.2) 100%)",
                 borderRadius: "4rem",
               }}
             >
-              <Search className="text-gray-400 mr-2" />
+              <Search className="text-gray-400 w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
               <input
                 data-testid="navbar-search-input"
                 type="text"
@@ -151,15 +191,16 @@ export default function Navbar() {
                 onFocus={() =>
                   searchQuery.trim().length > 0 && setShowSuggestions(true)
                 }
-                placeholder="Search for products, brands and more..."
-                className="bg-transparent w-full outline-none text-gray-800 dark:text-gray-100"
+                placeholder="Search..."
+                className="bg-transparent w-full outline-none text-gray-800 dark:text-gray-100 text-xs sm:text-sm placeholder:text-xs sm:placeholder:text-sm"
               />
               <button
                 data-testid="navbar-search-button"
                 type="submit"
-                className="ml-2 bg-gradient-to-r from-orange-500 to-pink-500 text-white px-3 md:px-4 py-1.5 rounded-full hover:from-orange-600 hover:to-pink-600 transition-all duration-300 font-medium text-sm shadow-md hover:shadow-lg"
+                className="ml-0.5 sm:ml-1 bg-gradient-to-r from-orange-500 to-pink-500 text-white px-1.5 sm:px-2.5 md:px-4 lg:px-6 py-1 sm:py-1.5 rounded-full hover:from-orange-600 hover:to-pink-600 transition-all duration-300 font-medium text-xs sm:text-sm md:text-base shadow-md hover:shadow-lg flex-shrink-0"
               >
-                Search
+                <span className="md:hidden">Go</span>
+                <span className="hidden md:inline">Search</span>
               </button>
             </form>
 
@@ -171,10 +212,10 @@ export default function Navbar() {
                     key={index}
                     onClick={() => handleSuggestionClick(suggestion)}
                     data-testid="search-suggestion-item"
-                    className="px-4 py-3 hover:bg-orange-50 dark:hover:bg-gray-700 cursor-pointer flex items-center gap-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0 transition-colors"
+                    className="px-3 sm:px-4 py-2 sm:py-3 hover:bg-orange-50 dark:hover:bg-gray-700 cursor-pointer flex items-center gap-2 sm:gap-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0 transition-colors text-sm"
                   >
-                    <Search className="w-4 h-4 text-gray-400" />
-                    <span className="text-gray-800 dark:text-gray-100">
+                    <Search className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0" />
+                    <span className="text-gray-800 dark:text-gray-100 truncate">
                       {suggestion}
                     </span>
                   </div>
@@ -184,7 +225,7 @@ export default function Navbar() {
           </div>
           {/* Profile picture and name to the right of searchbar */}
           {isAuthenticated && user && (
-            <div className="flex items-center mt-3 md:mt-0 md:ml-6">
+            <div className="hidden sm:flex items-center mt-3 md:mt-0 md:ml-6">
               <img
               data-testid="navbar-profile-avatar"
                 src={
@@ -197,13 +238,13 @@ export default function Navbar() {
                     : "/images/default-avatar.png"
                 }
                 alt="Profile"
-                className="w-14 md:w-16 h-14 md:h-16 rounded-full object-cover border-2 border-indigo-500 transition-transform duration-300 hover:scale-105"
+                className="w-10 sm:w-12 md:w-14 lg:w-16 h-10 sm:h-12 md:h-14 lg:h-16 rounded-full object-cover border-2 border-indigo-500 transition-transform duration-300 hover:scale-105"
                 onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
                   e.currentTarget.src = "/images/default-avatar.png";
                 }}
               />
 
-              <span data-testid="navbar-profile-name" className="ml-2 md:ml-3 font-semibold text-gray-800 dark:text-gray-100 text-base">
+              <span data-testid="navbar-profile-name" className="hidden md:inline ml-2 md:ml-3 font-semibold text-gray-800 dark:text-gray-100 text-sm md:text-base">
                 {user?.name ? user.name.toUpperCase() : "GUEST"}
               </span>
             </div>
@@ -211,42 +252,70 @@ export default function Navbar() {
         </div>
 
         {/* RIGHT */}
-        <div className="flex items-center gap-4 md:gap-6">
+        <div className="flex items-center gap-2 sm:gap-3 md:gap-6">
           {/* Wishlist with Count */}
-          <Link href="/wishlist" data-testid="navbar-wishlist" className="relative hover:text-red-500">
-            <Heart
-              className={`w-6 h-6 cursor-pointer transition-colors ${
-                wishlistCount > 0
-                  ? "text-red-500 fill-red-500 hover:text-red-600"
-                  : "text-gray-600 dark:text-gray-200 hover:text-red-500"
-              }`}
-            />
-            {wishlistCount > 0 && (
-              <span className="absolute -top-2 -right-2 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-lg">
-                {wishlistCount}
-              </span>
-            )}
+          <Link href="/wishlist" data-testid="navbar-wishlist" className="relative group">
+            <div className="relative p-2 rounded-xl bg-gradient-to-br from-pink-50 to-red-50 dark:from-pink-900/20 dark:to-red-900/20 hover:from-pink-100 hover:to-red-100 dark:hover:from-pink-800/30 dark:hover:to-red-800/30 transition-all duration-300 hover:scale-110 hover:shadow-lg">
+              <Heart
+                className={`w-5 h-5 sm:w-6 sm:h-6 cursor-pointer transition-all ${
+                  wishlistCount > 0
+                    ? "text-red-500 fill-red-500 drop-shadow-lg"
+                    : "text-pink-600 dark:text-pink-400"
+                }`}
+                style={{
+                  filter: "drop-shadow(0 2px 4px rgba(236, 72, 153, 0.3))"
+                }}
+              />
+              {wishlistCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-bold rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center shadow-lg text-[10px] sm:text-xs animate-pulse border-2 border-white dark:border-gray-900">
+                  {wishlistCount}
+                </span>
+              )}
+            </div>
           </Link>
           {/* Cart with Count */}
-          <Link href="/cart" data-testid="navbar-cart" className="relative hover:text-indigo-600">
-            <ShoppingCart className="w-6 h-6 text-gray-600 dark:text-gray-200 hover:text-indigo-600 cursor-pointer" />
-            {cartCount > 0 && (
-              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                {cartCount}
-              </span>
-            )}
+          <Link href="/cart" data-testid="navbar-cart" className="relative group">
+            <div className="relative p-2 rounded-xl bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 hover:from-purple-100 hover:to-indigo-100 dark:hover:from-purple-800/30 dark:hover:to-indigo-800/30 transition-all duration-300 hover:scale-110 hover:shadow-lg">
+              <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600 dark:text-indigo-400" style={{
+                filter: "drop-shadow(0 2px 4px rgba(99, 102, 241, 0.3))"
+              }} />
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 text-white text-xs font-bold rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center shadow-lg text-[10px] sm:text-xs animate-pulse border-2 border-white dark:border-gray-900">
+                  {cartCount}
+                </span>
+              )}
+            </div>
           </Link>
           <button
           data-testid="navbar-hamburger"
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+            className="relative p-2.5 w-11 h-11 flex flex-col items-center justify-center gap-1.5 rounded-xl bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 dark:from-orange-900/20 dark:via-amber-900/20 dark:to-yellow-900/20 hover:from-orange-100 hover:via-amber-100 hover:to-yellow-100 dark:hover:from-orange-800/30 dark:hover:via-amber-800/30 dark:hover:to-yellow-800/30 transition-all duration-300 hover:scale-110 hover:shadow-lg border border-orange-200/50 dark:border-orange-700/50"
             onClick={() => setMenuOpen(!menuOpen)}
 
           >
-            {menuOpen ? (
-              <X className="w-6 h-6 text-gray-700 dark:text-gray-200" />
-            ) : (
-              <Menu className="w-6 h-6 text-gray-700 dark:text-gray-200" />
-            )}
+            <span 
+              className={`w-6 h-0.5 bg-orange-600 dark:bg-orange-400 rounded-full transition-all duration-300 ${
+                menuOpen ? 'rotate-45 translate-y-2' : ''
+              }`}
+              style={{
+                filter: "drop-shadow(0 1px 2px rgba(234, 88, 12, 0.3))"
+              }}
+            ></span>
+            <span 
+              className={`w-6 h-0.5 bg-orange-600 dark:bg-orange-400 rounded-full transition-all duration-300 ${
+                menuOpen ? 'opacity-0 scale-0' : 'opacity-100 scale-100'
+              }`}
+              style={{
+                filter: "drop-shadow(0 1px 2px rgba(234, 88, 12, 0.3))"
+              }}
+            ></span>
+            <span 
+              className={`w-6 h-0.5 bg-orange-600 dark:bg-orange-400 rounded-full transition-all duration-300 ${
+                menuOpen ? '-rotate-45 -translate-y-2' : ''
+              }`}
+              style={{
+                filter: "drop-shadow(0 1px 2px rgba(234, 88, 12, 0.3))"
+              }}
+            ></span>
           </button>
         </div>
       </div>
@@ -397,6 +466,7 @@ export default function Navbar() {
         </>
       )}
     </nav>
+    </>
   );
 }
 

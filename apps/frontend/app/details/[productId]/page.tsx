@@ -690,12 +690,12 @@ export default function ProductDetailsPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
             {/* Left: Simple Image Gallery */}
-            <div className="space-y-4">
+            <div className="space-y-2 sm:space-y-3 md:space-y-4">
               {/* Main Image - Shows Selected View */}
               <div 
-                className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden aspect-square"
+                className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden aspect-square w-full"
               >
                 <div className="relative w-full h-full overflow-hidden">
                   <Image
@@ -707,7 +707,7 @@ export default function ProductDetailsPage() {
                   />
                 </div>
                 
-                <div className="absolute top-4 right-4 bg-gradient-to-r from-red-500 to-orange-500 text-white px-4 py-2 rounded-full font-bold shadow-lg animate-pulse z-10">
+                <div className="absolute top-2 sm:top-3 md:top-4 right-2 sm:right-3 md:right-4 bg-gradient-to-r from-red-500 to-orange-500 text-white px-2 sm:px-3 md:px-4 py-1 sm:py-2 rounded-full font-bold shadow-lg animate-pulse z-10 text-xs sm:text-sm">
                   {discount}% OFF
                 </div>
               </div>
@@ -744,7 +744,7 @@ export default function ProductDetailsPage() {
             </div>
 
             {/* Right: Enhanced Product Info */}
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-5 md:space-y-6">
               {/* Brand & Badge */}
               <div className="flex items-center gap-3">
                 <div className="inline-block px-4 py-1 bg-gradient-to-r from-orange-100 to-pink-100 dark:from-orange-900/30 dark:to-pink-900/30 rounded-full">
@@ -759,7 +759,7 @@ export default function ProductDetailsPage() {
               </div>
 
               {/* Product Name */}
-              <h1 className="text-4xl font-bold text-gray-900 dark:text-white leading-tight">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white leading-tight line-clamp-3">
                 {product.name}
               </h1>
 
@@ -775,19 +775,19 @@ export default function ProductDetailsPage() {
               </div>
 
               {/* Price */}
-              <div className="bg-gradient-to-r from-orange-50 to-pink-50 dark:from-gray-800 dark:to-gray-700 rounded-2xl p-6">
-                <div className="flex items-baseline gap-4">
-                  <span className="text-5xl font-bold bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
+              <div className="bg-gradient-to-r from-orange-50 to-pink-50 dark:from-gray-800 dark:to-gray-700 rounded-2xl p-4 sm:p-5 md:p-6">
+                <div className="flex flex-wrap items-baseline gap-2 sm:gap-3 md:gap-4">
+                  <span className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
                     {formatPrice(finalPrice)}
                   </span>
-                  <span className="text-2xl text-gray-400 line-through">
+                  <span className="text-lg sm:text-xl md:text-2xl text-gray-400 line-through">
                     {formatPrice(originalPrice)}
                   </span>
-                  <span className="text-green-600 font-bold text-xl">
+                  <span className="text-base sm:text-lg text-green-600 font-bold">
                     Save {formatPrice(originalPrice - finalPrice)}
                   </span>
                 </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-2">
                   Inclusive of all taxes
                 </p>
               </div>

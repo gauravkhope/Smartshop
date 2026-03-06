@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
@@ -14,6 +14,7 @@ export default function CheckoutPage() {
   const router = useRouter();
   const { cart, getCartTotal, clearCart, buyNowItem, clearBuyNowItem } = useCart();
   const { user } = useAuth();
+  const hasShownToast = useRef(false);
 
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -36,12 +37,17 @@ export default function CheckoutPage() {
     // Redirect if both cart and buyNowItem are empty
     if (cart.length === 0 && !buyNowItem) {
       router.push("/cart");
+      return;
     }
 
     // Redirect if not logged in
     if (!user) {
+      if (!hasShownToast.current) {
+        toast.error("Please login to continue");
+        hasShownToast.current = true;
+      }
       router.push("/login");
-      toast.error("Please login to continue");
+      return;
     }
 
     // Set email from user
@@ -166,35 +172,35 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-pink-50 to-purple-50 py-8">
-      <div className="container mx-auto px-4 max-w-7xl">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-pink-50 to-purple-50 py-6 sm:py-8">
+      <div className="container mx-auto px-4 sm:px-6 max-w-7xl">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           <button
             onClick={() => router.push("/cart")}
-            className="flex items-center gap-2 text-gray-600 hover:text-orange-500 transition-colors mb-4"
+            className="flex items-center gap-2 text-gray-600 hover:text-orange-500 transition-colors mb-3 sm:mb-4 text-sm sm:text-base"
           >
-            <ArrowLeft size={20} />
+            <ArrowLeft size={18} />
             <span>Back to Cart</span>
           </button>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-500 via-pink-500 to-purple-500 bg-clip-text text-transparent">
+          <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-orange-500 via-pink-500 to-purple-500 bg-clip-text text-transparent line-clamp-2">
             Checkout
           </h1>
-          <p className="text-gray-600 mt-2">Complete your order by filling in the details below</p>
+          <p className="text-gray-600 mt-1 sm:mt-2 text-sm sm:text-base">Complete your order by filling in the details below</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
           {/* Left Column - Shipping & Payment */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
             {/* Shipping Information */}
-            <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-3 bg-gradient-to-r from-orange-500 to-pink-500 rounded-xl">
-                  <Truck size={24} className="text-white" />
+            <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-6 border border-gray-100">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+                <div className="p-2 sm:p-3 bg-gradient-to-r from-orange-500 to-pink-500 rounded-xl">
+                  <Truck size={20} className="text-white" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-800">Shipping Information</h2>
-                  <p className="text-gray-600 text-sm">Where should we deliver your order?</p>
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Shipping Information</h2>
+                  <p className="text-gray-600 text-xs sm:text-sm">Where should we deliver your order?</p>
                 </div>
               </div>
 

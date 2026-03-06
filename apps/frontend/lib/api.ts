@@ -22,7 +22,7 @@ function getAuthHeaders(): HeadersInit {
 
 export async function fetchAllProducts() {
   try {
-    const res = await fetch(`${API_URL}/api/products`, {
+    const res = await fetch(`${API_URL}/products`, {
       cache: "no-store",
     });
     if (!res.ok) throw new Error(`Failed to fetch products`);
@@ -35,7 +35,7 @@ export async function fetchAllProducts() {
 
 export async function fetchProductsByCategory(category: string) {
   try {
-    const res = await fetch(`${API_URL}/api/products/category/${category}`, {
+    const res = await fetch(`${API_URL}/products/category/${category}`, {
       cache: "no-store",
     });
     if (!res.ok) throw new Error("Failed to fetch products by category");
@@ -48,7 +48,7 @@ export async function fetchProductsByCategory(category: string) {
 
 export async function fetchProductsByBrand(brand: string) {
   try {
-    const res = await fetch(`${API_URL}/api/products/brand/${brand}`, {
+    const res = await fetch(`${API_URL}/products/brand/${brand}`, {
       cache: "no-store",
     });
     if (!res.ok) throw new Error("Failed to fetch products by brand");
@@ -61,7 +61,7 @@ export async function fetchProductsByBrand(brand: string) {
 
 export async function fetchProductById(id: string | number) {
   try {
-    const res = await fetch(`${API_URL}/api/products/${id}`, {
+    const res = await fetch(`${API_URL}/products/${id}`, {
       cache: "no-store",
     });
     if (!res.ok) throw new Error("Failed to fetch product");
@@ -78,7 +78,7 @@ export async function fetchProductById(id: string | number) {
 
 export async function fetchUserProfile() {
   try {
-    const res = await fetch(`${API_URL}/api/user/profile`, {
+    const res = await fetch(`${API_URL}/user/profile`, {
       headers: getAuthHeaders(),
       cache: "no-store",
     });
@@ -123,7 +123,7 @@ export async function updateUserProfile(data: {
       (headers as any)["Content-Type"] = "application/json";
     }
 
-    const res = await fetch(`${API_URL}/api/user/profile`, {
+    const res = await fetch(`${API_URL}/user/profile`, {
       method: "PUT",
       headers,
       body,
@@ -153,7 +153,7 @@ export async function updateUserProfile(data: {
 
 export async function fetchLoginHistory() {
   try {
-    const res = await fetch(`${API_URL}/api/user/login-history`, {
+    const res = await fetch(`${API_URL}/user/login-history`, {
       headers: getAuthHeaders(),
       cache: "no-store",
     });
@@ -176,7 +176,7 @@ export async function fetchLoginHistory() {
 
 export async function requestPasswordReset(email: string) {
   try {
-    const res = await fetch(`${API_URL}/api/auth/forgot-password`, {
+    const res = await fetch(`${API_URL}/auth/forgot-password`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
@@ -196,7 +196,7 @@ export async function requestPasswordReset(email: string) {
 
 export async function resetPasswordWithToken(token: string, password: string) {
   try {
-    const res = await fetch(`${API_URL}/api/auth/reset-password`, {
+    const res = await fetch(`${API_URL}/auth/reset-password`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ token, password }),
@@ -219,23 +219,18 @@ export async function resetPasswordWithToken(token: string, password: string) {
 ======================= */
 
 export async function verifyResetCode(code: string, email: string) {
-  try {
-    const res = await fetch(`${API_URL}/api/auth/verify-code`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code, email }),
-    });
+  const res = await fetch(`${API_URL}/auth/verify-code`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ code, email }),
+  });
 
-    if (!res.ok) {
-      const error = await safeJson(res);
-      throw new Error(error?.message || "Invalid or expired code");
-    }
-
-    return res.json();
-  } catch (err) {
-    console.error("Error verifying code:", err);
-    throw err;
+  if (!res.ok) {
+    const errorData = await safeJson(res);
+    return Promise.reject(new Error(errorData?.message || "Invalid or expired code"));
   }
+
+  return res.json();
 }
 
 export async function resetPasswordWithCode(
@@ -244,7 +239,7 @@ export async function resetPasswordWithCode(
   password: string
 ) {
   try {
-    const res = await fetch(`${API_URL}/api/auth/reset-password-with-code`, {
+    const res = await fetch(`${API_URL}/auth/reset-password-with-code`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ code, email, password }),

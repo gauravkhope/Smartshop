@@ -56,17 +56,17 @@ const BestDealsSection: React.FC<BestDealsSectionProps> = ({
   const visibleProducts = products.slice(0, previewCount);
 
   return (
-    <section className="max-w-7xl mx-auto px-6 mt-14 select-none">
+    <section className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 mt-12 sm:mt-14 select-none">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-3xl font-bold text-gray-800 dark:text-white">
+      <div className="flex items-center justify-between mb-4 sm:mb-6 gap-2">
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-white line-clamp-1">
           {title}
         </h2>
 
         {seeAllLink && (
           <a
             href={seeAllLink}
-            className="text-sm text-blue-600 hover:underline"
+            className="text-xs sm:text-sm text-blue-600 hover:underline whitespace-nowrap"
           >
             See all →
           </a>
@@ -74,7 +74,7 @@ const BestDealsSection: React.FC<BestDealsSectionProps> = ({
       </div>
 
       {/* Products Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-6">
         {visibleProducts.map((p, index) => (
           <div
             key={p.id}

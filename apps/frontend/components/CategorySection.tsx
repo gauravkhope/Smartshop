@@ -52,16 +52,16 @@ const CategorySection: React.FC<CategorySectionProps> = ({
   const visibleProducts = products.slice(0, 5);
 
   return (
-    <section className="max-w-7xl mx-auto px-4 mt-12">
+    <section className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 mt-8 sm:mt-12">
       {/* Section Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-3xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+      <div className="flex items-center justify-between mb-4 sm:mb-6 gap-2">
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-white flex items-center gap-2 line-clamp-1">
           {title}
         </h2>
         {seeAllLink && (
           <a
             href={seeAllLink}
-            className="text-sm text-blue-600 hover:underline font-medium"
+            className="text-xs sm:text-sm text-blue-600 hover:underline font-medium whitespace-nowrap"
           >
             See All →
           </a>
@@ -70,7 +70,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({
 
       {/* Product Grid */}
       <div
-        className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6"
+        className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-6"
         style={{ justifyItems: "center" }}
       >
         {visibleProducts.map((product, index) => (

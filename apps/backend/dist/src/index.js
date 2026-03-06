@@ -145,11 +145,43 @@ const validateEnvironment = () => {
     }
 };
 validateEnvironment();
+// ====================================
+// AUTO-RUN DATABASE MIGRATIONS ON STARTUP
+// ====================================
+async function runMigrations() {
+    if (process.env.NODE_ENV === "production") {
+        console.log("🔄 Running database migrations...");
+        const { execSync } = require("child_process");
+        try {
+            execSync("npx prisma migrate deploy", { stdio: "inherit" });
+            console.log("✅ Database migrations completed successfully");
+        }
+        catch (error) {
+            console.error("❌ Migration failed:", error);
+            console.log("⚠️  Attempting to push schema instead...");
+            try {
+                execSync("npx prisma db push --accept-data-loss", { stdio: "inherit" });
+                console.log("✅ Database schema pushed successfully");
+            }
+            catch (pushError) {
+                console.error("❌ Schema push also failed. Starting server anyway...");
+            }
+        }
+    }
+}
 // Start the server and handle errors
 const PORT = process.env.PORT || 5000;
-const server = app.listen(PORT, () => {
-    console.log(`📝 Server listening on port ${PORT} and ready to accept requests`);
-});
-server.on("error", (error) => {
-    console.error("❌ Server error:", error);
+// Run migrations before starting server (only in production)
+runMigrations()
+    .then(() => {
+    const server = app.listen(PORT, () => {
+        console.log(`📝 Server listening on port ${PORT} and ready to accept requests`);
+    });
+    server.on("error", (error) => {
+        console.error("❌ Server error:", error);
+    });
+})
+    .catch((error) => {
+    console.error("❌ Failed to start server:", error);
+    process.exit(1);
 });

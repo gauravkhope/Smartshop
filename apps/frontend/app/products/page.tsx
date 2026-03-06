@@ -383,19 +383,19 @@ function AllProductsPage() {
   return (
     <main className="min-h-screen bg-orange-50">
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-orange-600 via-pink-600 to-purple-600 text-white py-12 mb-8">
-        <div className="max-w-7xl mx-auto px-8">
-          <h1 className="text-5xl font-bold mb-4">Explore Our Collection</h1>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+      <div className="bg-gradient-to-r from-orange-600 via-pink-600 to-purple-600 text-white py-6 sm:py-8 md:py-12 mb-6 sm:mb-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 line-clamp-2">Explore Our Collection</h1>
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 mt-4 sm:mt-6">
             <div className="text-center">
-              <p className="text-3xl font-bold">2000+</p>
-              <p className="text-sm opacity-90 uppercase tracking-wide">
+              <p className="text-2xl sm:text-3xl font-bold">2000+</p>
+              <p className="text-xs sm:text-sm opacity-90 uppercase tracking-wide">
                 Products
               </p>
             </div>
             <div className="text-center">
-              <p className="text-3xl font-bold">18</p>
-              <p className="text-sm opacity-90 uppercase tracking-wide">
+              <p className="text-2xl sm:text-3xl font-bold">18</p>
+              <p className="text-xs sm:text-sm opacity-90 uppercase tracking-wide">
                 Categories
               </p>
             </div>
@@ -473,15 +473,15 @@ function AllProductsPage() {
 
         {/* Advanced Filters Sidebar */}
         {showFilters && (
-          <div data-testid="filters-panel" className="mb-6 bg-orange-50 border border-gray-200 rounded-xl p-6 shadow-md">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div data-testid="filters-panel" className="mb-6 bg-orange-50 border border-gray-200 rounded-xl p-4 sm:p-6 shadow-md">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {/* Brand Filter */}
               <div data-testid="filter-brands">
-                <h3 className="text-sm font-bold text-gray-800 mb-3 uppercase tracking-wide flex items-center gap-2">
+                <h3 className="text-xs sm:text-sm font-bold text-gray-800 mb-2 sm:mb-3 uppercase tracking-wide flex items-center gap-2">
                   <span className="w-1 h-4 bg-gradient-to-b from-purple-500 to-pink-500 rounded"></span>
                   Brands
                 </h3>
-                <div className="max-h-48 overflow-y-auto space-y-2 pr-2 scrollbar-thin scrollbar-thumb-purple-300 scrollbar-track-gray-100">
+                <div className="max-h-40 sm:max-h-48 overflow-y-auto space-y-1 sm:space-y-2 pr-2 scrollbar-thin scrollbar-thumb-purple-300 scrollbar-track-gray-100">
                   {allBrands.map((brand) => (
                     <label
                       key={brand}
@@ -807,7 +807,7 @@ function AllProductsPage() {
                 {filteredProducts.length === 1 ? "product" : "products"}
               </p>
             </div>
-            <div className="grid gap-6 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5" data-testid="product-grid">
+            <div className="gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 grid" data-testid="product-grid">
               {paginatedProducts.map((product) => {
                 const isWishlisted = isInWishlist(product.id);
                 const isBursting = burstingHearts[product.id] || false;

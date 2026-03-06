@@ -29,7 +29,7 @@ const trending = [
 const mobiles = [
   { id: "m1", name: "iphone 17", brand: "Apple", price: "82,999", image: "https://www.apple.com/newsroom/images/2025/09/apple-debuts-iphone-17/geo/tile/Apple-iPhone-17-hero-250909-lp.jpg.news_app_ed.jpg" },
   { id: "m2", name: "Galaxy S25", brand: "Samsung", price: "80,999", image: "https://www.sammobile.com/wp-content/uploads/2025/01/Galaxy-s25-leaked-render-1.jpg" },
-  { id: "m3", name: "Galaxy Fold 7", brand: "Samsung", price: "1,74,999", image: "https://bnewmobiles.com/cdn/shop/files/53_cb7233aa-0963-4103-88da-316db51b2aa8_2048x.png?v=1753768158" },
+  { id: "m3", name: "Galaxy Fold 7", brand: "Samsung", price: "1,74,999", image: "https://images.samsung.com/is/image/samsung/assets/in/smartphones/galaxy-z-fold6/buy/Fold6_1600x864-4.jpg?imbypass=true" },
   { id: "m4", name: "Pixel 10 Pro Max", brand: "Google", price: "1,09,999", image: "https://vsprod.vijaysales.com/media/catalog/product/p/1/p10_pro_porcelain.jpeg?optimize=medium&fit=bounds&height=500&width=500" },
   { id: "m5", name: "iphone 16 Pro Max", brand: "Apple", price: "1,29,999", image: "https://www.dxomark.com/wp-content/uploads/drafts/post-178568/Apple-iPhone-16-Pro-Max_featured-image-packshot-review.png" },
   { id: "m6", name: "iPhone 16", brand: "Apple", price: "69,999", image: "https://vasanthandco.in/UploadedFiles/productimages/20240920014016-61DjMd76QnL._SX679_.jpg" },
@@ -67,11 +67,11 @@ const appliances = [
 ];
 
 const clothes = [
-  { id: "c1", name: "Fancy Women Dress", brand: "Fancy", price: 12999, image: "https://assets.myntassets.com/dpr_1.5,q_30,w_400,c_limit,fl_progressive/assets/images/2024/OCTOBER/21/6yluxQL3_d01b23632c1c409ba30c65d6ecb9ca15.jpg" },
+  { id: "c1", name: "Fancy Women Dress", brand: "Fancy", price: "12,999", image: "https://assets.myntassets.com/dpr_1.5,q_30,w_400,c_limit,fl_progressive/assets/images/2024/OCTOBER/21/6yluxQL3_d01b23632c1c409ba30c65d6ecb9ca15.jpg" },
   { id: "c2", name: "Co Ord Set for Women Beach Dress", brand: "Co ord", price: 14999, image: "https://m.media-amazon.com/images/I/51736s8xRiL._AC_UY1100_.jpg" },
-  { id: "c3", name: "Puma Classic Hoodie", brand: "Puma", price: 4999, image: "https://assets.myntassets.com/w_412,q_30,dpr_3,fl_progressive,f_webp/assets/images/25072310/2023/10/27/cffff245-fd63-4e86-a2c4-fdb4f8efae501698386573267-Essential-Big-Logo-Regular-Fit-Mens-Hoodie-7821698386572914-1.jpg" },
-  { id: "c4", name: "Levi’s Denim Jacket", brand: "Levi's", price: 7999, image: "https://levi.in/cdn/shop/files/003F80004_02_Front.jpg?v=1736333972" },
-  { id: "c5", name: "H&M Clothes", brand: "H&M", price: 1999, image: "https://www2.hm.com/content/dam/ind-local-assets/1320713001_202502_LB_1762-2x3.jpg" },
+  { id: "c3", name: "Puma Classic Hoodie", brand: "Puma", price: "4,999", image: "https://assets.myntassets.com/w_412,q_30,dpr_3,fl_progressive,f_webp/assets/images/25072310/2023/10/27/cffff245-fd63-4e86-a2c4-fdb4f8efae501698386573267-Essential-Big-Logo-Regular-Fit-Mens-Hoodie-7821698386572914-1.jpg" },
+  { id: "c4", name: "Levi’s Denim Jacket", brand: "Levi's", price: "7,999", image: "https://levi.in/cdn/shop/files/003F80004_02_Front.jpg?v=1736333972" },
+  { id: "c5", name: "H&M Clothes", brand: "H&M", price: "1,999", image: "https://www2.hm.com/content/dam/ind-local-assets/1320713001_202502_LB_1762-2x3.jpg" },
 ];
 
 const footwear = [
@@ -162,7 +162,7 @@ const bestDeals = [
     name: "Ladies Stylish Lehenga Choli with Dupatta",
     brand: "Traditional Wear",
     price: "21,499",
-    image: "https://www.textileinfomedia.com/img/cfkj/ladies-stylish-lehenga-choli-with-dupatta-full.jpg",
+    image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTQmXT3-REEfUb6FG_pdScxPdMudL7tVsyR9g&s",
     discount: 50,
   },
 ];
@@ -171,8 +171,11 @@ const bestDeals = [
 // More products (short sample here — expand to 200 in actual file)
 const moreProducts = [
   // add 200 curated items here; example few:
-  { id: "mp1", name: "Anker PowerBank 20k", brand: "Anker", price: 2499, image: "https://images.unsplash.com/photo-1607330288846" },
-  { id: "mp2", name: "Logitech MX Master 3", brand: "Logitech", price: 9999, image: "https://images.unsplash.com/photo-1517336714731" },
+  { id: "mp1", name: "Sony Alpha 7 IV Full-Frame Mirrorless Interchangeable Lens Camera with 28-70mm Zoom Lens Kit", brand: "Sony", price: "4,99,999", image: "https://shopatsc.com/cdn/shop/products/CX88500_SEL2470GM_right.jpg?v=1697633535" },
+  { id: "mp2", name: "SONY PlayStation5 Console (slim) CFI-2008A01X 1 TB", brand: "SONY", price: "60,000", image: "https://www.designinfo.in/wp-content/uploads/nc/p/5/1/9/2/3/51923-485x485.jpg" },
+  { id: "mp3", name: "LG 20 L Solo Microwave Oven MS2043BP", brand: "LG", price: "10,999", image: "https://encrypted-tbn1.gstatic.com/shopping?q=tbn:ANd9GcS26tMR3vjplvmwQfkXBOuoVetpWiCbvQP4HCO7R8GrzdzkQDJDe6bxUyRfFGUF_4wakJ3-LFwmEH1djlSZyIftUkdIedEh" },
+  { id: "mp4", name: "Logitech MX Keys S Wireless Keyboard", brand: "Logitech", price: "11,499", image: "https://rukmini1.flixcart.com/image/1500/1500/xif0q/keyboard/p/e/k/-original-imahbg3nvkraxpan.jpeg?q=70" },
+  { id: "mp5", name: "Logitech MX Master 3", brand: "Logitech", price: "22,999", image: "https://m.media-amazon.com/images/I/61xKiCADfpL.jpg" },
   // ... continue up to 200
 ];
 

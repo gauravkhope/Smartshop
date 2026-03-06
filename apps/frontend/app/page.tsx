@@ -115,7 +115,7 @@ export default function HomePage() {
 
       <main className="bg-gray-50 dark:bg-gray-900 min-h-screen">
         {/* HERO */}
-        <section className="mb-12">
+        <section className="mb-8 sm:mb-12">
           <HeroCarousel banners={processedData.heroBanners} />
         </section>
 
@@ -124,9 +124,9 @@ export default function HomePage() {
           id="trending-section"
           data-testid="trending-section"
           ref={(el) => { sectionRefs.current['trending-section'] = el; }}
-          className={`mb-12 max-w-7xl mx-auto px-6 ${visibleSections.has('trending-section') ? 'animate-section' : 'opacity-0'}`}
+          className={`mb-8 sm:mb-12 max-w-7xl mx-auto px-3 sm:px-4 md:px-6 ${visibleSections.has('trending-section') ? 'animate-section' : 'opacity-0'}`}
         >
-          <h2 className="text-3xl font-bold text-center mb-6 bg-gradient-to-r from-orange-600 via-pink-600 to-purple-600 bg-clip-text text-transparent">
+          <h2 className="text-2xl sm:text-3xl font-bold text-center mb-4 sm:mb-6 bg-gradient-to-r from-orange-600 via-pink-600 to-purple-600 bg-clip-text text-transparent line-clamp-2">
             🔥 Trending Products
           </h2>
           <TrendingCarousel products={processedData.trending} />
@@ -136,7 +136,7 @@ export default function HomePage() {
         <section 
           id="categories-section"
           ref={(el) => { sectionRefs.current['categories-section'] = el; }}
-          className={`max-w-7xl mx-auto px-6 space-y-12 ${visibleSections.has('categories-section') ? 'animate-section' : 'opacity-0'}`}
+          className={`max-w-7xl mx-auto px-3 sm:px-4 md:px-6 space-y-8 sm:space-y-12 ${visibleSections.has('categories-section') ? 'animate-section' : 'opacity-0'}`}
         >
           <div data-testid="category-section-block" className="stagger-item">
             <CategorySection
@@ -178,7 +178,7 @@ export default function HomePage() {
         <section 
           id="deals-section"
           ref={(el) => { sectionRefs.current['deals-section'] = el; }}
-          className={visibleSections.has('deals-section') ? 'animate-section' : 'opacity-0'}
+          className={`mt-8 sm:mt-12 ${visibleSections.has('deals-section') ? 'animate-section' : 'opacity-0'}`}
         >
           <BestDealsSection products={processedData.bestDeals as any} />
         </section>
@@ -187,13 +187,13 @@ export default function HomePage() {
         <section 
           id="more-products-section"
           ref={(el) => { sectionRefs.current['more-products-section'] = el; }}
-          className={`max-w-7xl mx-auto px-6 mt-16 mb-12 ${visibleSections.has('more-products-section') ? 'animate-section' : 'opacity-0'}`}
+          className={`max-w-7xl mx-auto px-3 sm:px-4 md:px-6 mt-12 sm:mt-16 mb-8 sm:mb-12 ${visibleSections.has('more-products-section') ? 'animate-section' : 'opacity-0'}`}
         >
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold bg-gradient-to-r from-orange-600 via-pink-600 to-purple-600 bg-clip-text text-transparent">More Products</h2>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-3">
+            <h2 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-orange-600 via-pink-600 to-purple-600 bg-clip-text text-transparent line-clamp-1">More Products</h2>
             <a
               href="/products"
-              className="text-orange-600 hover:text-orange-700 font-semibold flex items-center gap-2 transition-colors hover:scale-105 duration-300"
+              className="text-sm sm:text-base text-orange-600 hover:text-orange-700 font-semibold flex items-center gap-1 sm:gap-2 transition-colors hover:scale-105 duration-300 whitespace-nowrap"
             >
               View All Products
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
