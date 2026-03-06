@@ -163,7 +163,7 @@ export default function HomePage() {
                     Shop Now 🛍️
                   </button>
                   <p className="text-white/80 text-xs sm:text-sm text-center">
-                    Limited time offer
+                    Limited time offer today
                   </p>
                 </div>
               </div>
