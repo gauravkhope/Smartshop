@@ -119,6 +119,74 @@ export default function HomePage() {
           <HeroCarousel banners={processedData.heroBanners} />
         </section>
 
+        {/* Premium Promo Banner */}
+        <section className="mb-8 sm:mb-12 max-w-7xl mx-auto px-3 sm:px-4 md:px-6">
+          <div className="relative overflow-hidden rounded-2xl md:rounded-3xl bg-gradient-to-r from-violet-600 via-purple-600 to-pink-600 p-6 sm:p-8 md:p-12 shadow-2xl">
+            {/* Animated background pattern */}
+            <div className="absolute inset-0 opacity-10 animate-pulse">
+              <svg className="w-full h-full" viewBox="0 0 600 200">
+                <defs>
+                  <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" strokeWidth="1"/>
+                  </pattern>
+                </defs>
+                <rect width="600" height="200" fill="url(#grid)" />
+              </svg>
+            </div>
+
+            {/* Content */}
+            <div className="relative z-10">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                <div className="flex-1">
+                  <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-3 sm:mb-4">
+                    🎉 Special Offers
+                  </h2>
+                  <p className="text-lg sm:text-xl text-purple-100 mb-4 sm:mb-6">
+                    Get up to <span className="text-2xl sm:text-3xl font-bold text-yellow-300">50% OFF</span> on selected items!
+                  </p>
+                  <div className="flex flex-wrap gap-2 sm:gap-3">
+                    <span className="inline-block bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm font-semibold border border-white/30">
+                      ✨ Free Shipping
+                    </span>
+                    <span className="inline-block bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm font-semibold border border-white/30">
+                      🚚 Fast Delivery
+                    </span>
+                    <span className="inline-block bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm font-semibold border border-white/30">
+                      💯 Genuine Products
+                    </span>
+                  </div>
+                </div>
+                
+                {/* CTA Button */}
+                <div className="flex flex-col gap-3 md:w-auto">
+                  <button className="px-6 sm:px-8 py-3 sm:py-4 bg-white text-purple-600 font-bold rounded-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 text-base sm:text-lg md:text-xl">
+                    Shop Now 🛍️
+                  </button>
+                  <p className="text-white/80 text-xs sm:text-sm text-center">
+                    Limited time offer
+                  </p>
+                </div>
+              </div>
+
+              {/* Stats */}
+              <div className="grid grid-cols-3 gap-3 sm:gap-4 mt-8 pt-8 border-t border-white/20">
+                <div className="text-center">
+                  <p className="text-2xl sm:text-3xl font-bold text-white">10K+</p>
+                  <p className="text-white/80 text-xs sm:text-sm">Products</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl sm:text-3xl font-bold text-white">50K+</p>
+                  <p className="text-white/80 text-xs sm:text-sm">Happy Customers</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl sm:text-3xl font-bold text-white">24/7</p>
+                  <p className="text-white/80 text-xs sm:text-sm">Support</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Trending */}
         <section 
           id="trending-section"
