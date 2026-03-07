@@ -36,9 +36,20 @@ export default function Navbar() {
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isMobileSearchActive, setIsMobileSearchActive] = useState(false);
+  const [mobilePlaceholderIndex, setMobilePlaceholderIndex] = useState(0);
   const [allProducts, setAllProducts] = useState<any[]>([]);
   const router = useRouter();
   const searchRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+
+  const mobileSearchPlaceholders = [
+    "Search mobiles...",
+    "Search laptops...",
+    "Search fashion...",
+    "Search electronics...",
+  ];
 
   // Fetch products for autocomplete
   useEffect(() => {
@@ -95,6 +106,89 @@ export default function Navbar() {
     }
   }, [searchQuery, allProducts]);
 
+  // Close floating menu when clicking anywhere outside of menu and hamburger button
+  useEffect(() => {
+    if (!menuOpen) return;
+
+    const handleOutsideClick = (event: MouseEvent | TouchEvent) => {
+      const target = event.target as Node;
+      const clickedInsideMenu = menuRef.current?.contains(target);
+      const clickedHamburger = menuButtonRef.current?.contains(target);
+
+      if (!clickedInsideMenu && !clickedHamburger) {
+        setMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+    document.addEventListener("touchstart", handleOutsideClick);
+
+    const handleOutsideScroll = (event: Event) => {
+      const target = event.target as Node | null;
+      const scrolledInsideMenu = target && menuRef.current?.contains(target);
+      const scrolledHamburger = target && menuButtonRef.current?.contains(target);
+
+      if (!scrolledInsideMenu && !scrolledHamburger) {
+        setMenuOpen(false);
+      }
+    };
+
+    // Capture scroll/touchmove early so mobile outside scrolling also closes the menu.
+    window.addEventListener("scroll", handleOutsideScroll, true);
+    document.addEventListener("touchmove", handleOutsideScroll, true);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+      document.removeEventListener("touchstart", handleOutsideClick);
+      window.removeEventListener("scroll", handleOutsideScroll, true);
+      document.removeEventListener("touchmove", handleOutsideScroll, true);
+    };
+  }, [menuOpen]);
+
+  // Animate mobile placeholder text when the compact search bar is shown.
+  useEffect(() => {
+    if (isMobileSearchActive) return;
+
+    const intervalId = window.setInterval(() => {
+      setMobilePlaceholderIndex(
+        (prev) => (prev + 1) % mobileSearchPlaceholders.length
+      );
+    }, 1800);
+
+    return () => window.clearInterval(intervalId);
+  }, [isMobileSearchActive, mobileSearchPlaceholders.length]);
+
+  // Close mobile full-search mode only on outside click/touch.
+  useEffect(() => {
+    if (!isMobileSearchActive) return;
+
+    const handleOutsideActivity = (event: Event) => {
+      const target = event.target as Node | null;
+      const insideSearch = target && searchRef.current?.contains(target);
+      if (!insideSearch) {
+        setIsMobileSearchActive(false);
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideActivity);
+    document.addEventListener("touchstart", handleOutsideActivity);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideActivity);
+      document.removeEventListener("touchstart", handleOutsideActivity);
+    };
+  }, [isMobileSearchActive]);
+
+  const handleSearchInputFocus = () => {
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      setIsMobileSearchActive(true);
+    }
+    if (searchQuery.trim().length > 0) {
+      setShowSuggestions(true);
+    }
+  };
+
   const handleSearch = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (searchQuery.trim()) {
@@ -146,9 +240,99 @@ export default function Navbar() {
           -webkit-text-fill-color: transparent;
           background-clip: text;
         }
+
+        @keyframes suggestionFadeUp {
+          from {
+            opacity: 0;
+            transform: translateY(10px) scale(0.98);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+
+        .mobile-suggestion-item {
+          opacity: 0;
+          animation: suggestionFadeUp 460ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        .mobile-glass-dropdown {
+          background: linear-gradient(
+            145deg,
+            rgba(255, 251, 241, 0.88),
+            rgba(255, 244, 220, 0.8)
+          );
+          backdrop-filter: blur(32px) saturate(145%);
+          -webkit-backdrop-filter: blur(32px) saturate(145%);
+          border: 1px solid rgba(255, 237, 213, 0.78);
+          box-shadow:
+            0 20px 46px rgba(146, 104, 54, 0.26),
+            inset 0 1px 0 rgba(255, 255, 255, 0.62);
+        }
       `}</style>
       <nav data-testid="navbar" className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-md transition-all duration-300">
-        <div className="max-w-7xl mx-auto flex items-center justify-between px-2 sm:px-3 md:px-4 lg:px-6 py-2 sm:py-3 gap-2 sm:gap-3 md:gap-4 lg:gap-6">
+        {/* Mobile full-width search mode */}
+        {isMobileSearchActive && (
+          <div className="md:hidden px-2 py-2">
+            <div ref={searchRef} className="w-full relative">
+              <form
+                onSubmit={handleSearch}
+                className="flex items-center bg-gradient-to-r from-pink-500 via-orange-400 to-red-500 bg-opacity-20 rounded-[4rem] px-2 py-2 w-full gap-2"
+                style={{
+                  background:
+                    "linear-gradient(90deg, rgba(236,72,153,0.2) 0%, rgba(251,146,60,0.2) 50%, rgba(239,68,68,0.2) 100%)",
+                  borderRadius: "4rem",
+                }}
+              >
+                <Search className="text-gray-400 w-5 h-5 flex-shrink-0" />
+                <input
+                  data-testid="navbar-search-input-mobile-active"
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={handleSearchInputFocus}
+                  placeholder="Search products..."
+                  className="bg-transparent w-full outline-none text-gray-800 dark:text-gray-100 text-sm placeholder:text-sm"
+                  autoFocus
+                />
+                <button
+                  data-testid="navbar-search-button-mobile-active"
+                  type="submit"
+                  className="bg-gradient-to-r from-orange-500 to-pink-500 text-white px-4 py-1.5 rounded-full hover:from-orange-600 hover:to-pink-600 transition-all duration-300 font-medium text-sm shadow-md hover:shadow-lg flex-shrink-0"
+                >
+                  Search
+                </button>
+              </form>
+
+              {showSuggestions && suggestions.length > 0 && (
+                <div
+                  data-testid="search-suggestion-dropdown-mobile-active"
+                  className="mobile-glass-dropdown absolute left-1 right-1 top-full mt-1.5 rounded-xl max-h-[42vh] overflow-y-auto overscroll-contain z-[70]"
+                >
+                  <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-amber-900 border-b border-amber-200/70 bg-amber-50/45">
+                    Suggestions
+                  </div>
+                  {suggestions.map((suggestion, index) => (
+                    <div
+                      key={index}
+                      onClick={() => handleSuggestionClick(suggestion)}
+                      className="mobile-suggestion-item px-3 py-2.5 hover:bg-amber-50/65 active:bg-orange-100/75 cursor-pointer flex items-center gap-2 border-b border-amber-100/70 last:border-b-0 transition-colors text-xs"
+                      style={{ animationDelay: `${index * 80}ms` }}
+                    >
+                      <Search className="w-3.5 h-3.5 text-amber-700/80 flex-shrink-0" />
+                      <span className="text-amber-950 truncate">
+                        {suggestion}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        <div className={`max-w-7xl mx-auto ${isMobileSearchActive ? "hidden md:flex" : "flex"} items-center px-2 sm:px-3 md:px-4 lg:px-6 py-2 sm:py-3 gap-2 sm:gap-3 md:gap-4 lg:gap-6 justify-between`}>
           {/* LEFT */}
           <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3">
           <div className="relative p-2 sm:p-2.5 md:p-3 rounded-2xl bg-gradient-to-br from-violet-100 via-purple-100 to-fuchsia-100 dark:from-violet-900/30 dark:via-purple-900/30 dark:to-fuchsia-900/30 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 border-2 border-purple-200/50 dark:border-purple-700/50 animate-pulse">
@@ -175,6 +359,11 @@ export default function Navbar() {
           <div ref={searchRef} className="flex md:relative w-full max-w-xs sm:max-w-sm md:max-w-xl lg:max-w-3xl">
             <form
               onSubmit={handleSearch}
+              onClick={() => {
+                if (typeof window !== "undefined" && window.innerWidth < 768) {
+                  setIsMobileSearchActive(true);
+                }
+              }}
               className="flex items-center bg-gradient-to-r from-pink-500 via-orange-400 to-red-500 bg-opacity-20 rounded-[4rem] px-1.5 sm:px-2 md:px-3 lg:px-4 py-1.5 sm:py-2 w-full gap-1 sm:gap-2"
               style={{
                 background:
@@ -188,16 +377,18 @@ export default function Navbar() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                onFocus={() =>
-                  searchQuery.trim().length > 0 && setShowSuggestions(true)
+                onFocus={handleSearchInputFocus}
+                placeholder={
+                  isMobileSearchActive
+                    ? "Search products..."
+                    : mobileSearchPlaceholders[mobilePlaceholderIndex]
                 }
-                placeholder="Search..."
                 className="bg-transparent w-full outline-none text-gray-800 dark:text-gray-100 text-xs sm:text-sm placeholder:text-xs sm:placeholder:text-sm"
               />
               <button
                 data-testid="navbar-search-button"
                 type="submit"
-                className="ml-0.5 sm:ml-1 bg-gradient-to-r from-orange-500 to-pink-500 text-white px-1.5 sm:px-2.5 md:px-4 lg:px-6 py-1 sm:py-1.5 rounded-full hover:from-orange-600 hover:to-pink-600 transition-all duration-300 font-medium text-xs sm:text-sm md:text-base shadow-md hover:shadow-lg flex-shrink-0"
+                className="ml-0.5 sm:ml-1 bg-gradient-to-r from-orange-500 to-pink-500 text-white px-1.5 sm:px-2.5 md:px-4 lg:px-6 py-1 sm:py-1.5 rounded-full hover:from-orange-600 hover:to-pink-600 transition-all duration-300 font-medium text-xs sm:text-sm md:text-base shadow-md hover:shadow-lg flex-shrink-0 hidden md:inline-flex"
               >
                 <span className="md:hidden">Go</span>
                 <span className="hidden md:inline">Search</span>
@@ -206,16 +397,23 @@ export default function Navbar() {
 
             {/* Autocomplete Suggestions Dropdown */}
             {showSuggestions && suggestions.length > 0 && (
-              <div data-testid="search-suggestion-dropdown" className="absolute top-full mt-2 w-full bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 max-h-96 overflow-y-auto z-50">
+              <div
+                data-testid="search-suggestion-dropdown"
+                className="mobile-glass-dropdown absolute top-full mt-2 w-full rounded-xl max-h-96 overflow-y-auto z-50"
+              >
+                <div className="px-3 sm:px-4 py-2 text-[10px] sm:text-xs font-semibold uppercase tracking-wide text-amber-900 border-b border-amber-200/70 bg-amber-50/45">
+                  Suggestions
+                </div>
                 {suggestions.map((suggestion, index) => (
                   <div
                     key={index}
                     onClick={() => handleSuggestionClick(suggestion)}
                     data-testid="search-suggestion-item"
-                    className="px-3 sm:px-4 py-2 sm:py-3 hover:bg-orange-50 dark:hover:bg-gray-700 cursor-pointer flex items-center gap-2 sm:gap-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0 transition-colors text-sm"
+                    className="mobile-suggestion-item px-3 sm:px-4 py-2 sm:py-3 hover:bg-amber-50/65 active:bg-orange-100/75 cursor-pointer flex items-center gap-2 sm:gap-3 border-b border-amber-100/70 last:border-b-0 transition-colors text-sm"
+                    style={{ animationDelay: `${index * 70}ms` }}
                   >
-                    <Search className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0" />
-                    <span className="text-gray-800 dark:text-gray-100 truncate">
+                    <Search className="w-3 h-3 sm:w-4 sm:h-4 text-amber-700/80 flex-shrink-0" />
+                    <span className="text-amber-950 truncate">
                       {suggestion}
                     </span>
                   </div>
@@ -287,6 +485,7 @@ export default function Navbar() {
             </div>
           </Link>
           <button
+          ref={menuButtonRef}
           data-testid="navbar-hamburger"
             className="relative p-2.5 w-11 h-11 flex flex-col items-center justify-center gap-1.5 rounded-xl bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 dark:from-orange-900/20 dark:via-amber-900/20 dark:to-yellow-900/20 hover:from-orange-100 hover:via-amber-100 hover:to-yellow-100 dark:hover:from-orange-800/30 dark:hover:via-amber-800/30 dark:hover:to-yellow-800/30 transition-all duration-300 hover:scale-110 hover:shadow-lg border border-orange-200/50 dark:border-orange-700/50"
             onClick={() => setMenuOpen(!menuOpen)}
@@ -323,7 +522,7 @@ export default function Navbar() {
       {menuOpen && (
         <>
           {/* Floating glassmorphic menu - less transparent, icons visible */}
-            <div data-testid="side-drawer" className="fixed top-24 right-8 z-[60] w-72 p-0">
+            <div ref={menuRef} data-testid="side-drawer" className="fixed top-24 right-8 z-[60] w-72 p-0">
             <div
               className="relative rounded-2xl backdrop-blur-xl bg-white/70 dark:bg-gray-800/70 border border-gray-200 dark:border-gray-700 shadow-2xl overflow-hidden"
               style={{
