@@ -100,6 +100,7 @@ app.use("/api/payments", paymentRoutes);
 
 
 import { verifyUserPassword } from '../lib/userService';
+import { verifyEmailTransporter } from './services/emailService';
 app.post('/api/verify-password', async (req: Request, res: Response) => {
   const { userId, password } = req.body;
   if (!userId || !password) {
@@ -217,12 +218,12 @@ app.use(errorHandler);
 // ENVIRONMENT VALIDATION
 // ====================================
 const validateEnvironment = (): void => {
-const requiredEnvVars = [
-  "DATABASE_URL",
-  "JWT_SECRET",
-  "RESEND_API_KEY",
-  "EMAIL_FROM",
-];
+  const requiredEnvVars = [
+    "DATABASE_URL",
+    "JWT_SECRET",
+    "EMAIL_USER",
+    "EMAIL_PASSWORD",
+  ];
 
   const missingEnvVars = requiredEnvVars.filter((envVar) => !process.env[envVar]);
 
@@ -282,6 +283,17 @@ const PORT = process.env.PORT || 5000;
 ;(async () => {
   try {
     await runMigrations();
+
+    try {
+      await verifyEmailTransporter();
+    } catch (err) {
+      if (process.env.NODE_ENV === "production") {
+        console.error("❌ Email transporter verification failed in production. Please check SMTP credentials and environment variables.");
+        process.exit(1);
+      } else {
+        console.warn("⚠️ Email transporter verification failed (development). Emails may fall back to Ethereal.", err);
+      }
+    }
 
     const server = app.listen(PORT, () => {
       console.log(`📝 Server listening on port ${PORT} and ready to accept requests`);
