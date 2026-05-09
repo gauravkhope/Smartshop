@@ -41,7 +41,7 @@ const createTransporter = () => {
 
   // Default SMTP configuration
   return nodemailer.createTransport({
-    host: "smtp.gmail.com",
+    host: "smtp-relay.brevo.com",
     port: 587,
     secure: false, // STARTTLS
     auth: {
