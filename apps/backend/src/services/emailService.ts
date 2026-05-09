@@ -25,6 +25,12 @@ export const sendRegistrationOtpEmail = async (
   const displayName = toTitleCaseName(name);
 
   try {
+    console.log("=================================");
+    console.log("RESEND API KEY:", process.env.RESEND_API_KEY);
+    console.log("EMAIL FROM:", process.env.EMAIL_FROM);
+    console.log("Sending Registration OTP to:", to);
+    console.log("=================================");
+
     const response = await resend.emails.send({
       from: process.env.EMAIL_FROM || "onboarding@resend.dev",
       to,
@@ -56,7 +62,9 @@ export const sendRegistrationOtpEmail = async (
       `,
     });
 
+    console.log("✅ RESEND RESPONSE:", response);
     console.log("✅ Registration OTP email sent");
+
     return response;
   } catch (error) {
     console.error("❌ Error sending registration OTP email:", error);
@@ -76,6 +84,10 @@ export const sendPasswordResetCodeEmail = async (
   const displayName = toTitleCaseName(name);
 
   try {
+    console.log("=================================");
+    console.log("Sending Password Reset OTP to:", to);
+    console.log("=================================");
+
     const response = await resend.emails.send({
       from: process.env.EMAIL_FROM || "onboarding@resend.dev",
       to,
@@ -107,7 +119,9 @@ export const sendPasswordResetCodeEmail = async (
       `,
     });
 
+    console.log("✅ RESEND RESPONSE:", response);
     console.log("✅ Password reset OTP email sent");
+
     return response;
   } catch (error) {
     console.error("❌ Error sending password reset OTP email:", error);
@@ -124,6 +138,10 @@ export const sendWelcomeEmail = async (
   name: string
 ) => {
   try {
+    console.log("=================================");
+    console.log("Sending Welcome Email to:", to);
+    console.log("=================================");
+
     const response = await resend.emails.send({
       from: process.env.EMAIL_FROM || "onboarding@resend.dev",
       to,
@@ -145,7 +163,9 @@ export const sendWelcomeEmail = async (
       `,
     });
 
+    console.log("✅ RESEND RESPONSE:", response);
     console.log("✅ Welcome email sent");
+
     return response;
   } catch (error) {
     console.error("❌ Error sending welcome email:", error);
