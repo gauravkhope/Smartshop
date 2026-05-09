@@ -28,6 +28,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 {/* Global Toast Notification */}
                 <Toaster
                   position="bottom-right"
+                  containerStyle={{
+                    bottom: 62,
+                    right: 20,
+                  }}
                   toastOptions={{
                     style: {
                       borderRadius: "12px",

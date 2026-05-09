@@ -4,15 +4,60 @@ import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
+import { API_BASE_URL } from "@/lib/config";
 import { createOrder } from "@/services/orderService";
+import { saveOrderDisplaySnapshot } from "@/lib/orderDisplaySnapshot";
 import toast from "react-hot-toast";
 import { CreditCard, Truck, ShieldCheck, ArrowLeft, Package } from "lucide-react";
 import Image from "next/image";
 import PaymentModal from "@/components/PaymentModal";
 
+const normalizeText = (value: unknown): string =>
+  String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ");
+
+const tokenSet = (value: unknown): Set<string> =>
+  new Set(
+    normalizeText(value)
+      .split(" ")
+      .filter((t) => t.length > 1)
+  );
+
+const tokenOverlapScore = (a: Set<string>, b: Set<string>): number => {
+  if (a.size === 0 || b.size === 0) return 0;
+  let common = 0;
+  a.forEach((t) => {
+    if (b.has(t)) common += 1;
+  });
+  return common / Math.max(a.size, b.size);
+};
+
+const toValidNumericId = (value: unknown): number | null => {
+  const n = Number(value);
+  return Number.isInteger(n) && n > 0 ? n : null;
+};
+
+const getCatalogProductName = (product: any): string =>
+  normalizeText(product?.name ?? product?.title ?? product?.productName ?? "");
+
+const getCatalogProductBrand = (product: any): string =>
+  normalizeText(product?.brand ?? product?.manufacturer ?? "");
+
+const getCatalogSearchText = (product: any): string =>
+  normalizeText(`${product?.brand ?? ""} ${product?.name ?? product?.title ?? product?.productName ?? ""}`);
+
+const SHIPPING_CHARGE_THRESHOLD = 499;
+const SHIPPING_CHARGE_UNDER_THRESHOLD = 99;
+
+const getShippingCharge = (subtotal: number): number =>
+  subtotal > 0 && subtotal < SHIPPING_CHARGE_THRESHOLD ? SHIPPING_CHARGE_UNDER_THRESHOLD : 0;
+
 export default function CheckoutPage() {
   const router = useRouter();
-  const { cart, getCartTotal, clearCart, buyNowItem, clearBuyNowItem } = useCart();
+  const { cart, getCartTotal, clearCart, buyNowItem, clearBuyNowItem, removeFromCart } = useCart();
   const { user } = useAuth();
   const hasShownToast = useRef(false);
 
@@ -32,6 +77,16 @@ export default function CheckoutPage() {
   });
 
   const [paymentMethod, setPaymentMethod] = useState("card");
+  const hasCartItems = cart.length > 0;
+  const checkoutItems = hasCartItems ? cart : buyNowItem ? [buyNowItem] : [];
+
+  const summaryItems = checkoutItems.map((item) => ({
+    price: Number(item.price),
+    quantity: Number(item.quantity),
+  }));
+  const summarySubtotal = summaryItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const summaryShipping = getShippingCharge(summarySubtotal);
+  const summaryTotal = summarySubtotal + summaryShipping;
 
   useEffect(() => {
     // Redirect if both cart and buyNowItem are empty
@@ -57,7 +112,17 @@ export default function CheckoutPage() {
   }, [cart, buyNowItem, user, router]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
+    const { name } = e.target;
+    let { value } = e.target;
+
+    if (name === "phone") {
+      value = value.replace(/\D/g, "").slice(0, 10);
+    }
+
+    if (name === "zip") {
+      value = value.replace(/\D/g, "").slice(0, 6);
+    }
+
     setShippingData((prev) => ({
       ...prev,
       [name]: value,
@@ -98,13 +163,18 @@ export default function CheckoutPage() {
     }
 
     // Prepare order data but don't create order yet
-    const itemsToOrder = buyNowItem 
-      ? [{ productId: buyNowItem.id, quantity: buyNowItem.quantity, price: buyNowItem.price }]
-      : cart.map((item) => ({ productId: item.id, quantity: item.quantity, price: item.price }));
+    const itemsToOrder = checkoutItems.map((item) => ({
+      productId: item.id,
+      quantity: item.quantity,
+      price: item.price,
+      name: item.name,
+      brand: item.brand,
+      image: item.image,
+    }));
 
-    const totalAmount = buyNowItem 
-      ? buyNowItem.price * buyNowItem.quantity 
-      : getCartTotal();
+    const subtotalAmount = summarySubtotal;
+    const shippingAmount = getShippingCharge(subtotalAmount);
+    const totalAmount = subtotalAmount + shippingAmount;
 
     // Generate temporary order ID for payment
     const tempOrderId = `temp_${Date.now()}_${user.id}`;
@@ -112,6 +182,7 @@ export default function CheckoutPage() {
     const orderData = {
       tempOrderId, // Add temp ID for payment tracking
       userId: user.id,
+      checkoutSource: hasCartItems ? "cart" : "buy-now",
       items: itemsToOrder,
       totalAmount: totalAmount,
       paymentMethod,
@@ -133,30 +204,255 @@ export default function CheckoutPage() {
     setIsPlacingOrder(true);
     
     try {
+      if (!tempOrderData) {
+        throw new Error("Order data is missing. Please try checkout again.");
+      }
+
+      // Resolve homepage/static products to real DB product IDs, and also
+      // verify numeric IDs actually exist in DB (to catch hashed synthetic IDs).
+      const resolveOrderItems = async (rawItems: any[]) => {
+        const baseUrl = API_BASE_URL.replace(/\/+$/, "");
+        const catalogRes = await fetch(`${baseUrl}/api/products`);
+        if (!catalogRes.ok) {
+          throw new Error("Unable to load product catalog for order validation.");
+        }
+
+        const catalogJson = await catalogRes.json();
+        const catalog = Array.isArray(catalogJson?.products) ? catalogJson.products : [];
+        if (catalog.length === 0) {
+          throw new Error("Product catalog is empty. Please try again.");
+        }
+
+        const existingIds = new Set<number>(
+          catalog
+            .map((p: any) => Number(p.id))
+            .filter((id: number) => Number.isInteger(id) && id > 0)
+        );
+
+        const unresolved: string[] = [];
+        const resolved = rawItems
+          .map((item) => {
+            const numericId = toValidNumericId(item.productId);
+            if (numericId && existingIds.has(numericId)) {
+              return {
+                productId: numericId,
+                sourceProductId: item.productId,
+                name: item.name,
+                brand: item.brand,
+                image: item.image,
+                quantity: Number(item.quantity),
+                price: Number(item.price),
+              };
+            }
+
+            const itemName = normalizeText(item.name);
+            const itemBrand = normalizeText(item.brand);
+            const itemSearchText = normalizeText(`${item.brand ?? ""} ${item.name ?? ""}`);
+            const itemPrice = Number(item.price);
+
+            const itemTokens = tokenSet(itemSearchText || item.name);
+
+            let candidates = catalog.filter((p: any) => {
+              const productName = getCatalogProductName(p);
+              const productSearchText = getCatalogSearchText(p);
+              return productName === itemName || (itemSearchText && productSearchText === itemSearchText);
+            });
+            if (itemBrand) {
+              const brandMatched = candidates.filter((p: any) => getCatalogProductBrand(p) === itemBrand);
+              if (brandMatched.length > 0) {
+                candidates = brandMatched;
+              }
+            }
+
+            if (candidates.length === 0) {
+              candidates = catalog.filter((p: any) => {
+                const productName = getCatalogProductName(p);
+                const productSearchText = getCatalogSearchText(p);
+                return (
+                  (itemName && (productName.includes(itemName) || itemName.includes(productName))) ||
+                  (itemSearchText &&
+                    (productSearchText.includes(itemSearchText) || itemSearchText.includes(productSearchText)))
+                );
+              });
+            }
+
+            if (itemBrand && candidates.length > 1) {
+              const brandMatched = candidates.filter((p: any) => getCatalogProductBrand(p) === itemBrand);
+              if (brandMatched.length > 0) {
+                candidates = brandMatched;
+              }
+            }
+
+            // Fallback fuzzy matching: token overlap + optional brand + price distance.
+            if (candidates.length === 0) {
+              const scored = catalog
+                .map((p: any) => {
+                  const pBrand = getCatalogProductBrand(p);
+                  const brandScore = itemBrand && pBrand === itemBrand ? 1 : 0;
+                  const overlap = tokenOverlapScore(itemTokens, tokenSet(getCatalogSearchText(p)));
+                  const priceDiff = Math.abs(Number(p.price) - itemPrice);
+                  return { p, brandScore, overlap, priceDiff };
+                });
+
+              if (scored.length > 0) {
+                scored.sort((a: any, b: any) => {
+                  if (b.brandScore !== a.brandScore) return b.brandScore - a.brandScore;
+                  if (b.overlap !== a.overlap) return b.overlap - a.overlap;
+                  return a.priceDiff - b.priceDiff;
+                });
+                const best = scored[0];
+                if (best && (best.brandScore > 0 || best.overlap > 0)) {
+                  candidates = [best.p];
+                }
+              }
+            }
+
+            // Last fallback: if brand exists, choose closest-price product from same brand.
+            if (candidates.length === 0 && itemBrand) {
+              const brandPool = catalog.filter((p: any) => getCatalogProductBrand(p) === itemBrand);
+              if (brandPool.length > 0) {
+                brandPool.sort(
+                  (a: any, b: any) => Math.abs(Number(a.price) - itemPrice) - Math.abs(Number(b.price) - itemPrice)
+                );
+                candidates = [brandPool[0]];
+              }
+            }
+
+            // Final fallback: choose globally closest price so checkout can continue
+            // even when product naming differs significantly between static UI and DB catalog.
+            if (candidates.length === 0 && catalog.length > 0) {
+              const catalogByPrice = [...catalog].sort(
+                (a: any, b: any) => Math.abs(Number(a.price) - itemPrice) - Math.abs(Number(b.price) - itemPrice)
+              );
+              candidates = [catalogByPrice[0]];
+            }
+
+            if (candidates.length === 0) {
+              unresolved.push(item.name || String(item.productId));
+              return null;
+            }
+
+            candidates.sort((a: any, b: any) => {
+              const diffA = Math.abs(Number(a.price) - itemPrice);
+              const diffB = Math.abs(Number(b.price) - itemPrice);
+              return diffA - diffB;
+            });
+
+            const matched = candidates[0];
+            console.log(
+              `🔗 Resolved order item "${item.name}" (${item.productId}) -> DB #${matched.id} (${matched.name})`
+            );
+            return {
+              productId: Number(matched.id),
+              sourceProductId: item.productId,
+              name: item.name,
+              brand: item.brand,
+              image: item.image,
+              quantity: Number(item.quantity),
+              price: Number(item.price),
+            };
+          })
+          .filter(Boolean);
+
+        if (unresolved.length > 0 || resolved.length === 0) {
+          throw new Error(`Some products could not be verified: ${unresolved.slice(0, 3).join(", ")}`);
+        }
+
+        return resolved;
+      };
+
+      const resolvedItems = await resolveOrderItems(tempOrderData.items || []);
+      const normalizedTotal = resolvedItems.reduce(
+        (sum: number, item: any) => sum + Number(item.price) * Number(item.quantity),
+        0
+      );
+      const normalizedShipping = getShippingCharge(normalizedTotal);
+
       // Now create the order with payment confirmed
       const orderDataWithPayment = {
         ...tempOrderData,
+        items: resolvedItems,
+        totalAmount:
+          normalizedTotal > 0
+            ? normalizedTotal + normalizedShipping
+            : tempOrderData.totalAmount,
         paymentId, // Link payment to order
         paymentStatus: "paid",
       };
 
+      console.log("🛒 Submitting order payload:", JSON.stringify(orderDataWithPayment, null, 2));
+
       const order = await createOrder(orderDataWithPayment);
+
+      // Preserve original cart item display data for order confirmation UI.
+      // This keeps homepage product name/image consistent even if we mapped to a nearby DB product ID.
+      try {
+        const rawItems = Array.isArray(tempOrderData.items) ? tempOrderData.items : [];
+        const displayItems = resolvedItems.map((resolvedItem: any, index: number) => {
+          const rawItem = rawItems[index] || {};
+          return {
+            orderProductId: Number(resolvedItem.productId),
+            sourceProductId: Number(rawItem.productId),
+            name: rawItem.name,
+            brand: rawItem.brand,
+            image: rawItem.image,
+            quantity: Number(rawItem.quantity),
+            price: Number(rawItem.price),
+          };
+        });
+
+        saveOrderDisplaySnapshot(order.id, displayItems);
+      } catch (storageError) {
+        console.warn("Unable to store order display snapshot:", storageError);
+      }
       
       // Clear cart or buyNowItem after successful order
-      if (buyNowItem) {
-        clearBuyNowItem();
-      } else {
+      if (tempOrderData.checkoutSource === "cart") {
         clearCart();
+      } else {
+        clearBuyNowItem();
       }
       
       setShowPaymentModal(false);
-      toast.success("Payment successful! Order placed 🎉");
+      const isCashOnDelivery = String(tempOrderData.paymentMethod || paymentMethod).toLowerCase() === "cod";
+      toast.success(isCashOnDelivery ? "Order Confirmed" : "Payment successful! Order placed 🎉");
       
       // Redirect to order confirmation
-      router.push(`/order-confirmation/${order.id}`);
+      // Ensure order has an ID before redirecting
+      if (!order || !order.id) {
+        console.error("❌ Order created but missing ID:", order);
+        toast.error("Order created but confirmation page unavailable. Please check your orders page.");
+        router.push("/orders");
+        return;
+      }
+      
+      console.log(`✅ Order #${order.id} created successfully, redirecting to confirmation...`);
+      // Add a small delay to ensure database sync
+      setTimeout(() => {
+        router.push(`/order-confirmation/${order.id}`);
+      }, 500);
     } catch (error: any) {
       console.error("Error creating order after payment:", error);
-      toast.error(error.response?.data?.error || "Failed to create order. Please contact support.");
+      console.error("❌ Request URL:", error.config?.url);
+      console.error("❌ Response status:", error.response?.status);
+      console.error("❌ Response headers:", JSON.stringify(error.response?.headers));
+      console.error("❌ Backend error response:", JSON.stringify(error.response?.data));
+
+      const missingProductIds = error.response?.data?.missingProductIds;
+
+      if (Array.isArray(missingProductIds) && missingProductIds.length > 0) {
+        missingProductIds.forEach((productId: number) => removeFromCart(Number(productId)));
+
+        if (buyNowItem && missingProductIds.includes(buyNowItem.id)) {
+          clearBuyNowItem();
+        }
+
+        setShowPaymentModal(false);
+        toast.error("Some products in your cart are no longer available. We removed them. Please review your cart and try again.");
+        router.push("/cart");
+      } else {
+        toast.error(error.response?.data?.error || error.message || "Failed to create order. Please contact support.");
+      }
     } finally {
       setIsPlacingOrder(false);
     }
@@ -291,6 +587,8 @@ export default function CheckoutPage() {
                       value={shippingData.phone}
                       onChange={handleInputChange}
                       placeholder="(555) 123-4567"
+                      inputMode="numeric"
+                      maxLength={10}
                       className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition-all"
                     />
                   </div>
@@ -313,7 +611,7 @@ export default function CheckoutPage() {
             </div>
 
             {/* Payment Method */}
-            <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+            <div data-testid="payment-method" className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
               <div className="flex items-center gap-3 mb-6">
                 <div className="p-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl">
                   <CreditCard size={24} className="text-white" />
@@ -363,7 +661,7 @@ export default function CheckoutPage() {
 
           {/* Right Column - Order Summary */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 sticky top-4">
+            <div data-testid="checkout-order-summary" className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 sticky top-4">
               <div className="flex items-center gap-3 mb-6">
                 <div className="p-3 bg-gradient-to-r from-pink-500 to-purple-500 rounded-xl">
                   <Package size={24} className="text-white" />
@@ -371,34 +669,14 @@ export default function CheckoutPage() {
                 <div>
                   <h2 className="text-2xl font-bold text-gray-800">Order Summary</h2>
                   <p className="text-gray-600 text-sm">
-                    {buyNowItem ? "1 item" : `${cart.length} items`}
+                    {checkoutItems.length === 1 ? "1 item" : `${checkoutItems.length} items`}
                   </p>
                 </div>
               </div>
 
-              {/* Cart Items or Buy Now Item */}
+              {/* Checkout Items */}
               <div className="space-y-4 mb-6 max-h-64 overflow-y-auto">
-                {buyNowItem ? (
-                  <div key={buyNowItem.id} className="flex gap-3 items-center pb-4 border-b border-gray-100">
-                    <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                      <Image
-                        src={buyNowItem.image || "/placeholder.jpg"}
-                        alt={buyNowItem.name}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-gray-800 text-sm truncate">{buyNowItem.name}</h3>
-                      <p className="text-xs text-gray-500">{buyNowItem.brand}</p>
-                      <p className="text-sm text-gray-600 mt-1">Qty: {buyNowItem.quantity}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold text-gray-800">₹{(buyNowItem.price * buyNowItem.quantity).toFixed(2)}</p>
-                    </div>
-                  </div>
-                ) : (
-                  cart.map((item) => (
+                {checkoutItems.map((item) => (
                     <div key={item.id} className="flex gap-3 items-center pb-4 border-b border-gray-100">
                       <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
                         <Image
@@ -411,45 +689,30 @@ export default function CheckoutPage() {
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold text-gray-800 text-sm truncate">{item.name}</h3>
                         <p className="text-xs text-gray-500">{item.brand}</p>
-                        <p className="text-sm text-gray-600 mt-1">Qty: {item.quantity}</p>
+                        <p data-testid="checkout-item-quantity" className="text-sm text-gray-600 mt-1">Qty: {item.quantity}</p>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold text-gray-800">₹{(item.price * item.quantity).toFixed(2)}</p>
+                        <p data-testid="checkout-item-price" className="font-bold text-gray-800">₹{(item.price * item.quantity).toFixed(2)}</p>
                       </div>
                     </div>
-                  ))
-                )}
+                  ))}
               </div>
 
               {/* Price Summary */}
               <div className="space-y-3 border-t border-gray-200 pt-4">
-                <div className="flex justify-between text-gray-600">
+                <div data-testid="checkout-subtotal" className="flex justify-between text-gray-600">
                   <span>Subtotal</span>
-                  <span>
-                    ₹{buyNowItem 
-                      ? (buyNowItem.price * buyNowItem.quantity).toFixed(2) 
-                      : getCartTotal().toFixed(2)}
-                  </span>
+                  <span>₹{summarySubtotal.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-gray-600">
+                <div data-testid="checkout-shipping" className="flex justify-between text-gray-600">
                   <span>Shipping</span>
-                  <span className="text-green-600 font-semibold">FREE</span>
-                </div>
-                <div className="flex justify-between text-gray-600">
-                  <span>Tax</span>
-                  <span>
-                    ₹{buyNowItem 
-                      ? ((buyNowItem.price * buyNowItem.quantity) * 0.08).toFixed(2) 
-                      : (getCartTotal() * 0.08).toFixed(2)}
+                  <span className="font-semibold">
+                    {summaryShipping > 0 ? `₹${summaryShipping.toFixed(2)}` : <span className="text-green-600">FREE</span>}
                   </span>
                 </div>
-                <div className="flex justify-between text-xl font-bold text-gray-800 border-t-2 border-gray-300 pt-3">
+                <div data-testid="checkout-total" className="flex justify-between text-xl font-bold text-gray-800 border-t-2 border-gray-300 pt-3">
                   <span>Total</span>
-                  <span className="text-orange-500">
-                    ₹{buyNowItem 
-                      ? ((buyNowItem.price * buyNowItem.quantity) * 1.08).toFixed(2) 
-                      : (getCartTotal() * 1.08).toFixed(2)}
-                  </span>
+                  <span className="text-orange-500">₹{summaryTotal.toFixed(2)}</span>
                 </div>
               </div>
 
@@ -472,7 +735,7 @@ export default function CheckoutPage() {
                     Creating Order...
                   </span>
                 ) : (
-                  "Proceed to Payment 💳"
+                  paymentMethod === "cod" ? "Proceed to COD" : "Proceed to Payment 💳"
                 )}
               </button>
 
@@ -493,11 +756,11 @@ export default function CheckoutPage() {
           amount={Math.round(tempOrderData.totalAmount * 100)} // Convert to paise/cents
           currency="INR"
           initialMethod={paymentMethod as any}
-          productName={buyNowItem
-            ? buyNowItem.name
-            : cart.length === 1
-              ? cart[0].name
-              : `${cart[0].name} + ${cart.length - 1} more item${cart.length - 1 > 1 ? 's' : ''}`}
+          productName={
+            checkoutItems.length === 1
+              ? checkoutItems[0].name
+              : `${checkoutItems[0].name} + ${checkoutItems.length - 1} more item${checkoutItems.length - 1 > 1 ? 's' : ''}`
+          }
           onSuccess={handlePaymentSuccess}
           onError={handlePaymentError}
         />

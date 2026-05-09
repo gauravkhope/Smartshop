@@ -6,13 +6,18 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const dotenv_1 = __importDefault(require("dotenv"));
+const path_1 = __importDefault(require("path"));
 const productroutes_1 = __importDefault(require("./routes/productroutes"));
 const authRoutes_1 = __importDefault(require("./routes/authRoutes"));
 const userRoutes_1 = __importDefault(require("./routes/userRoutes"));
 const orderRoutes_1 = __importDefault(require("./routes/orderRoutes"));
+const returnReplaceRoutes_1 = __importDefault(require("./routes/returnReplaceRoutes"));
 const paymentRoutes_1 = __importDefault(require("./routes/paymentRoutes"));
-const profile_1 = __importDefault(require("./routes/profile"));
-dotenv_1.default.config();
+const errorHandler_1 = require("./middlewares/errorHandler");
+dotenv_1.default.config({
+    path: path_1.default.resolve(__dirname, "../.env"),
+    override: true,
+});
 const app = (0, express_1.default)();
 // ====================================
 // CORS setup with environment support
@@ -43,15 +48,23 @@ app.use((0, cors_1.default)({
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],
 }));
-// ✅ Enable JSON parsing
-app.use(express_1.default.json());
+// Body parsers must run before routes
+app.use(express_1.default.json({ limit: "1mb" }));
+app.use(express_1.default.urlencoded({ extended: true, limit: "1mb" }));
 // ✅ Serve static files from uploads folder (for avatars)
 app.use("/uploads", express_1.default.static("uploads"));
 // ✅ Mount routes
 app.use("/api/products", productroutes_1.default);
 app.use("/api/auth", authRoutes_1.default);
 app.use("/api/user", userRoutes_1.default);
-app.use("/api/user", profile_1.default); // ✅ NEW route for profile (PUT /api/user/profile)
+app.use("/api/orders", returnReplaceRoutes_1.default);
 app.use("/api/orders", orderRoutes_1.default);
 app.use("/api/payments", paymentRoutes_1.default);
+// Catch-all unmatched route logger for debugging
+app.use((req, res, next) => {
+    console.error(`[ROUTE DEBUG] Unmatched route: ${req.method} ${req.originalUrl}`);
+    next();
+});
+app.use(errorHandler_1.notFoundHandler);
+app.use(errorHandler_1.errorHandler);
 exports.default = app;

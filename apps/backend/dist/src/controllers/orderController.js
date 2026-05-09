@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.cancelOrder = exports.getAllOrders = exports.updateOrderStatus = exports.getOrderById = exports.getUserOrders = exports.createOrder = void 0;
 const client_1 = require("@prisma/client");
+const validation_1 = require("../utils/validation");
 const prisma = new client_1.PrismaClient();
 // Create a new order
 const createOrder = async (req, res) => {
@@ -9,10 +10,38 @@ const createOrder = async (req, res) => {
         console.log("📦 Order creation request received");
         console.log("Request body:", JSON.stringify(req.body, null, 2));
         const { userId, items, totalAmount, paymentMethod, shippingAddress, shippingCity, shippingState, shippingZip, shippingCountry, phone, email, } = req.body;
+        if (!req.user) {
+            return res.status(401).json({ error: "Unauthorized" });
+        }
+        const authUserId = req.user.id;
+        if (userId && Number(userId) !== authUserId) {
+            return res.status(403).json({ error: "Forbidden: cannot create order for another user" });
+        }
         // Validate required fields
-        if (!userId || !items || !totalAmount || !shippingAddress || !shippingCity || !shippingState || !shippingZip || !phone || !email) {
-            console.error("❌ Missing required fields:", { userId, items: items?.length, totalAmount, shippingAddress, shippingCity, shippingState, shippingZip, phone, email });
-            return res.status(400).json({ error: "Missing required fields" });
+        const missingFields = [];
+        if (!userId)
+            missingFields.push("userId");
+        if (!items)
+            missingFields.push("items");
+        if (totalAmount === undefined || totalAmount === null || isNaN(Number(totalAmount)))
+            missingFields.push("totalAmount");
+        if (!paymentMethod)
+            missingFields.push("paymentMethod");
+        if (!shippingAddress)
+            missingFields.push("shippingAddress");
+        if (!shippingCity)
+            missingFields.push("shippingCity");
+        if (!shippingState)
+            missingFields.push("shippingState");
+        if (!shippingZip)
+            missingFields.push("shippingZip");
+        if (!phone)
+            missingFields.push("phone");
+        if (!email)
+            missingFields.push("email");
+        if (missingFields.length > 0) {
+            console.error("❌ Missing required fields:", missingFields, { userId, itemsCount: items?.length, totalAmount, shippingAddress, shippingCity, shippingState, shippingZip, phone, email });
+            return res.status(400).json({ error: `Missing required fields: ${missingFields.join(", ")}`, missingFields });
         }
         // Validate items array
         if (!Array.isArray(items) || items.length === 0) {
@@ -28,16 +57,32 @@ const createOrder = async (req, res) => {
         const missingProductIds = productIds.filter(id => !existingProductIds.includes(id));
         if (missingProductIds.length > 0) {
             return res.status(400).json({
-                error: "Some products in the order do not exist",
+                error: "This Product Does not Exists . Enter a Valid Id",
                 missingProductIds
             });
         }
-        // Create order with items
+        const normalizedPaymentMethod = typeof paymentMethod === "string" ? paymentMethod.trim().toLowerCase() : "";
+        const allowedPaymentMethods = ["card", "upi", "wallet", "netbanking", "emi", "cod"];
+        if (!allowedPaymentMethods.includes(normalizedPaymentMethod)) {
+            return res.status(400).json({
+                error: "Invalid paymentMethod. Allowed values: card, upi, wallet, netbanking, emi, cod",
+                allowedPaymentMethods,
+            });
+        }
+        // Find the highest orderNumber for this user
+        const lastOrder = await prisma.order.findFirst({
+            where: { userId: authUserId },
+            orderBy: { orderNumber: "desc" },
+            select: { orderNumber: true },
+        });
+        const nextOrderNumber = lastOrder?.orderNumber ? lastOrder.orderNumber + 1 : 1;
+        // Create order with items and per-user orderNumber
         const order = await prisma.order.create({
             data: {
-                userId: parseInt(userId),
+                userId: authUserId,
+                orderNumber: nextOrderNumber,
                 totalAmount: parseFloat(totalAmount),
-                paymentMethod: paymentMethod || "card",
+                paymentMethod: normalizedPaymentMethod,
                 paymentStatus: "pending",
                 orderStatus: "processing",
                 shippingAddress,
@@ -50,6 +95,12 @@ const createOrder = async (req, res) => {
                 items: {
                     create: items.map((item) => ({
                         productId: parseInt(item.productId),
+                        sourceProductRef: item.sourceProductId !== undefined && item.sourceProductId !== null
+                            ? String(item.sourceProductId)
+                            : null,
+                        displayName: item.name ? String(item.name) : null,
+                        displayBrand: item.brand ? String(item.brand) : null,
+                        displayImage: item.image ? String(item.image) : null,
                         quantity: parseInt(item.quantity),
                         price: parseFloat(item.price),
                     })),
@@ -85,13 +136,20 @@ exports.createOrder = createOrder;
 // Get all orders for a user
 const getUserOrders = async (req, res) => {
     try {
+        if (!req.user) {
+            return res.status(401).json({ error: "Unauthorized" });
+        }
         const { userId } = req.params;
-        if (!userId) {
-            return res.status(400).json({ error: "User ID is required" });
+        const parsedUserId = (0, validation_1.parsePositiveInt)(userId);
+        if (!parsedUserId) {
+            return res.status(400).json({ error: "This is Invalid UserID. Please enter valid UserID." });
+        }
+        if (parsedUserId !== req.user.id) {
+            return res.status(403).json({ error: "Forbidden: cannot view another user's orders" });
         }
         const orders = await prisma.order.findMany({
             where: {
-                userId: parseInt(userId),
+                userId: parsedUserId,
             },
             include: {
                 items: {
@@ -104,7 +162,9 @@ const getUserOrders = async (req, res) => {
                 createdAt: "desc",
             },
         });
-        res.json(orders);
+        // Always include orderNumber in response
+        const ordersWithOrderNumber = orders.map(order => ({ ...order, orderNumber: order.orderNumber }));
+        res.json(ordersWithOrderNumber);
     }
     catch (error) {
         console.error("Error fetching user orders:", error);
@@ -115,13 +175,17 @@ exports.getUserOrders = getUserOrders;
 // Get a specific order by ID
 const getOrderById = async (req, res) => {
     try {
+        if (!req.user) {
+            return res.status(401).json({ error: "Unauthorized" });
+        }
         const { orderId } = req.params;
-        if (!orderId) {
-            return res.status(400).json({ error: "Order ID is required" });
+        const parsedOrderId = (0, validation_1.parsePositiveInt)(orderId);
+        if (!parsedOrderId) {
+            return res.status(400).json({ error: "Invalid OrderId" });
         }
         const order = await prisma.order.findUnique({
             where: {
-                id: parseInt(orderId),
+                id: parsedOrderId,
             },
             include: {
                 items: {
@@ -141,7 +205,11 @@ const getOrderById = async (req, res) => {
         if (!order) {
             return res.status(404).json({ error: "Order not found" });
         }
-        res.json(order);
+        if (order.userId !== req.user.id) {
+            return res.status(403).json({ error: "Forbidden: cannot view another user's order" });
+        }
+        // Always include orderNumber in response
+        res.json({ ...order, orderNumber: order.orderNumber });
     }
     catch (error) {
         console.error("Error fetching order:", error);
@@ -152,9 +220,13 @@ exports.getOrderById = getOrderById;
 // Update order status
 const updateOrderStatus = async (req, res) => {
     try {
+        if (!req.user) {
+            return res.status(401).json({ error: "Unauthorized" });
+        }
         const { orderId } = req.params;
         const { orderStatus, paymentStatus } = req.body;
-        if (!orderId) {
+        const parsedOrderId = (0, validation_1.parsePositiveInt)(orderId);
+        if (!parsedOrderId) {
             return res.status(400).json({ error: "Order ID is required" });
         }
         const updateData = {};
@@ -164,7 +236,7 @@ const updateOrderStatus = async (req, res) => {
             updateData.paymentStatus = paymentStatus;
         const order = await prisma.order.update({
             where: {
-                id: parseInt(orderId),
+                id: parsedOrderId,
             },
             data: updateData,
             include: {
@@ -189,30 +261,36 @@ exports.updateOrderStatus = updateOrderStatus;
 // Get all orders (admin)
 const getAllOrders = async (req, res) => {
     try {
-        console.log("📋 getAllOrders called");
-        // Temporarily return empty array to test route
-        res.json([]);
-        // const orders = await prisma.order.findMany({
-        //   include: {
-        //     items: {
-        //       include: {
-        //         product: true,
-        //       },
-        //     },
-        //     user: {
-        //       select: {
-        //         id: true,
-        //         name: true,
-        //         email: true,
-        //       },
-        //     },
-        //   },
-        //   orderBy: {
-        //     createdAt: "desc",
-        //   },
-        //   });
-        // console.log(`📋 Found ${orders.length} orders`);
-        // res.json(orders);
+        if (!req.user) {
+            return res.status(401).json({ error: "Unauthorized" });
+        }
+        const currentUser = await prisma.user.findUnique({
+            where: { id: req.user.id },
+            select: { role: true },
+        });
+        if (!currentUser || currentUser.role !== "ADMIN") {
+            return res.status(403).json({ error: "Forbidden: admin access required" });
+        }
+        const orders = await prisma.order.findMany({
+            include: {
+                items: {
+                    include: {
+                        product: true,
+                    },
+                },
+                user: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                    },
+                },
+            },
+            orderBy: {
+                createdAt: "desc",
+            },
+        });
+        res.json(orders);
     }
     catch (error) {
         console.error("❌ Error fetching all orders:", error);
@@ -223,13 +301,17 @@ exports.getAllOrders = getAllOrders;
 // Cancel an order
 const cancelOrder = async (req, res) => {
     try {
+        if (!req.user) {
+            return res.status(401).json({ error: "Unauthorized" });
+        }
         const { orderId } = req.params;
-        if (!orderId) {
+        const parsedOrderId = (0, validation_1.parsePositiveInt)(orderId);
+        if (!parsedOrderId) {
             return res.status(400).json({ error: "Order ID is required" });
         }
         // Fetch the order first
         const order = await prisma.order.findUnique({
-            where: { id: parseInt(orderId) },
+            where: { id: parsedOrderId },
             include: {
                 items: { include: { product: true } },
                 user: { select: { id: true, name: true, email: true } },
@@ -237,6 +319,9 @@ const cancelOrder = async (req, res) => {
         });
         if (!order) {
             return res.status(404).json({ error: "Order not found" });
+        }
+        if (order.userId !== req.user.id) {
+            return res.status(403).json({ error: "Forbidden: cannot cancel another user's order" });
         }
         // Prevent cancelling delivered/cancelled orders
         if (order.orderStatus === "delivered") {
@@ -247,7 +332,7 @@ const cancelOrder = async (req, res) => {
         }
         // Update order status
         const cancelledOrder = await prisma.order.update({
-            where: { id: parseInt(orderId) },
+            where: { id: parsedOrderId },
             data: {
                 orderStatus: "cancelled",
                 paymentStatus: "refunded", // optional

@@ -1,38 +1,43 @@
 "use client";
 
-import React, { useMemo, useEffect, useRef, useState } from "react";
-import HeroCarousel from "@/components/HeroCarousel";
-import TrendingCarousel from "@/components/TrendingCarousel";
-import CategorySection from "@/components/CategorySection";
-import BestDealsSection from "@/components/BestDealsSection";
-import MoreProductsSection from "@/components/MoreProductSection";
+import React, { useMemo, useEffect, useState } from "react";
+import dynamic from "next/dynamic";
+import GlassMorphismSkeletonLoader from "@/components/GlassMorphismSkeleton";
 import homepageData from "@/data/homepageData";
 
+const HeroCarousel = dynamic(() => import("@/components/HeroCarousel"), {
+  loading: () => <div className="glass-skeleton-card !h-[220px] sm:!h-[300px]" />,
+});
+
+const TrendingCarousel = dynamic(() => import("@/components/TrendingCarousel"), {
+  loading: () => <GlassMorphismSkeletonLoader count={5} />,
+});
+
+const CategorySection = dynamic(() => import("@/components/CategorySection"), {
+  loading: () => <GlassMorphismSkeletonLoader count={5} />,
+});
+
+const BestDealsSection = dynamic(() => import("@/components/BestDealsSection"), {
+  loading: () => <GlassMorphismSkeletonLoader count={5} />,
+});
+
+const MoreProductsSection = dynamic(() => import("@/components/MoreProductSection"), {
+  loading: () => <GlassMorphismSkeletonLoader count={10} fullSize />,
+});
 
 export default function HomePage() {
-  const [visibleSections, setVisibleSections] = useState<Set<string>>(new Set());
-  const sectionRefs = useRef<{ [key: string]: HTMLElement | null }>({});
+  const [showSkeleton, setShowSkeleton] = useState(true);
 
-  // Intersection Observer for fade-in animations
   useEffect(() => {
-    const observerOptions = {
-      threshold: 0.1,
-      rootMargin: "0px 0px -100px 0px",
-    };
+    const hasLoadedBefore = window.localStorage.getItem("home_page_loaded_once") === "true";
+    const loadingDurationMs = hasLoadedBefore ? 2000 : 6000;
+    window.localStorage.setItem("home_page_loaded_once", "true");
 
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          setVisibleSections((prev) => new Set([...prev, entry.target.id]));
-        }
-      });
-    }, observerOptions);
+    const timer = window.setTimeout(() => {
+      setShowSkeleton(false);
+    }, loadingDurationMs);
 
-    Object.values(sectionRefs.current).forEach((ref) => {
-      if (ref) observer.observe(ref);
-    });
-
-    return () => observer.disconnect();
+    return () => window.clearTimeout(timer);
   }, []);
 
   // Memoize data processing to avoid recalculation on every render
@@ -56,16 +61,69 @@ export default function HomePage() {
 
   return (
     <>
+      {showSkeleton && (
+        <div className="fixed inset-x-0 bottom-0 top-20 md:top-16 z-[100] overflow-y-auto bg-orange-50/95 backdrop-blur-sm">
+          <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 space-y-8 sm:space-y-12 py-8 sm:py-12 pb-10">
+            <div className="glass-skeleton-card home-lux-shimmer !h-[220px] sm:!h-[300px]">
+              <div className="home-lux-shimmer-beam" />
+              <div className="home-lux-shimmer-beam home-lux-shimmer-beam-soft" />
+              <div className="home-lux-shimmer-spark" />
+            </div>
+
+            <div className="glass-skeleton-card home-lux-shimmer home-lux-shimmer-delayed !h-[200px] sm:!h-[240px]">
+              <div className="home-lux-shimmer-beam" />
+              <div className="home-lux-shimmer-beam home-lux-shimmer-beam-soft" />
+              <div className="home-lux-shimmer-spark" />
+            </div>
+
+            <div>
+              <div className="glass-skeleton-line !w-64 !h-8 mb-5" />
+              <GlassMorphismSkeletonLoader count={5} fullSize />
+            </div>
+
+            <div className="space-y-6">
+              <div className="glass-skeleton-line !w-52 !h-8" />
+              <GlassMorphismSkeletonLoader count={5} fullSize />
+              <GlassMorphismSkeletonLoader count={5} fullSize />
+            </div>
+
+            <div>
+              <div className="glass-skeleton-line !w-44 !h-8 mb-5" />
+              <GlassMorphismSkeletonLoader count={5} fullSize />
+            </div>
+
+            <div>
+              <div className="glass-skeleton-line !w-56 !h-8 mb-5" />
+              <GlassMorphismSkeletonLoader count={10} fullSize />
+            </div>
+          </div>
+        </div>
+      )}
+
       <style jsx global>{`
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(40px);
+        @keyframes homeLuxSweep {
+          0% {
+            transform: translateX(-130%) rotate(10deg);
           }
-          to {
-            opacity: 1;
-            transform: translateY(0);
+          100% {
+            transform: translateX(130%) rotate(10deg);
           }
+        }
+
+        @keyframes homeLuxGlow {
+          0%, 100% {
+            opacity: 0.3;
+            transform: scale(1);
+          }
+          50% {
+            opacity: 0.6;
+            transform: scale(1.03);
+          }
+        }
+
+        @keyframes homeLuxSparkle {
+          0%, 100% { opacity: 0.25; }
+          50% { opacity: 0.72; }
         }
 
         @keyframes gradientShift {
@@ -77,22 +135,6 @@ export default function HomePage() {
           }
         }
 
-        @keyframes staggerFadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(20px) scale(0.95);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-          }
-        }
-
-        .animate-section {
-          opacity: 0;
-          animation: fadeInUp 0.8s ease-out forwards;
-        }
-
         .animate-gradient-border {
           position: relative;
           background: linear-gradient(270deg, #ff6b6b, #f06595, #cc5de8, #845ef7);
@@ -100,17 +142,72 @@ export default function HomePage() {
           animation: gradientShift 3s ease infinite;
         }
 
-        .stagger-item {
-          opacity: 0;
-          animation: staggerFadeIn 0.6s ease-out forwards;
+        .home-lux-shimmer {
+          position: relative;
+          overflow: hidden;
+          isolation: isolate;
         }
 
-        .stagger-item:nth-child(1) { animation-delay: 0.1s; }
-        .stagger-item:nth-child(2) { animation-delay: 0.2s; }
-        .stagger-item:nth-child(3) { animation-delay: 0.3s; }
-        .stagger-item:nth-child(4) { animation-delay: 0.4s; }
-        .stagger-item:nth-child(5) { animation-delay: 0.5s; }
-        .stagger-item:nth-child(6) { animation-delay: 0.6s; }
+        .home-lux-shimmer::before {
+          content: "";
+          position: absolute;
+          inset: -20%;
+          pointer-events: none;
+          background:
+            radial-gradient(80% 70% at 10% 15%, rgba(255, 255, 255, 0.25), transparent 70%),
+            radial-gradient(90% 75% at 90% 85%, rgba(255, 220, 160, 0.18), transparent 75%);
+          animation: homeLuxGlow 3.2s ease-in-out infinite;
+          z-index: 1;
+        }
+
+        .home-lux-shimmer-beam {
+          position: absolute;
+          inset: -35% -25%;
+          pointer-events: none;
+          background: linear-gradient(
+            95deg,
+            rgba(255, 255, 255, 0) 0%,
+            rgba(255, 248, 230, 0.14) 28%,
+            rgba(255, 245, 210, 0.82) 48%,
+            rgba(255, 220, 120, 0.42) 62%,
+            rgba(255, 255, 255, 0) 100%
+          );
+          filter: blur(1px);
+          mix-blend-mode: screen;
+          animation: homeLuxSweep 2.25s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+          z-index: 2;
+        }
+
+        .home-lux-shimmer-beam-soft {
+          opacity: 0.55;
+          filter: blur(6px);
+          animation-duration: 2.8s;
+          animation-delay: 0.28s;
+        }
+
+        .home-lux-shimmer-spark {
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          background-image:
+            radial-gradient(circle at 18% 30%, rgba(255, 255, 255, 0.92) 0 1px, transparent 2px),
+            radial-gradient(circle at 76% 44%, rgba(255, 240, 200, 0.85) 0 1.5px, transparent 2.5px),
+            radial-gradient(circle at 56% 70%, rgba(255, 255, 255, 0.72) 0 1px, transparent 2px);
+          animation: homeLuxSparkle 2.2s ease-in-out infinite;
+          z-index: 3;
+        }
+
+        .home-lux-shimmer-delayed .home-lux-shimmer-beam {
+          animation-delay: 0.5s;
+        }
+
+        .home-lux-shimmer-delayed .home-lux-shimmer-beam-soft {
+          animation-delay: 0.8s;
+        }
+
+        .home-lux-shimmer-delayed .home-lux-shimmer-spark {
+          animation-delay: 0.35s;
+        }
       `}</style>
 
       <main className="bg-gray-50 dark:bg-gray-900 min-h-screen">
@@ -188,11 +285,10 @@ export default function HomePage() {
         </section>
 
         {/* Trending */}
-        <section 
+        <section
           id="trending-section"
           data-testid="trending-section"
-          ref={(el) => { sectionRefs.current['trending-section'] = el; }}
-          className={`mb-8 sm:mb-12 max-w-7xl mx-auto px-3 sm:px-4 md:px-6 ${visibleSections.has('trending-section') ? 'animate-section' : 'opacity-0'}`}
+          className="mb-8 sm:mb-12 max-w-7xl mx-auto px-3 sm:px-4 md:px-6"
         >
           <h2 className="text-2xl sm:text-3xl font-bold text-center mb-4 sm:mb-6 bg-gradient-to-r from-orange-600 via-pink-600 to-purple-600 bg-clip-text text-transparent line-clamp-2">
             🔥 Trending Products
@@ -201,40 +297,39 @@ export default function HomePage() {
         </section>
 
         {/* Category Sections */}
-        <section 
+        <section
           id="categories-section"
-          ref={(el) => { sectionRefs.current['categories-section'] = el; }}
-          className={`max-w-7xl mx-auto px-3 sm:px-4 md:px-6 space-y-8 sm:space-y-12 ${visibleSections.has('categories-section') ? 'animate-section' : 'opacity-0'}`}
+          className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 space-y-8 sm:space-y-12"
         >
-          <div data-testid="category-section-block" className="stagger-item">
+          <div data-testid="category-section-block">
             <CategorySection
               title="Mobiles"
               products={processedData.mobiles as any}
               seeAllLink="/products/mobiles"
             />
           </div>
-          <div data-testid="category-section-block" className="stagger-item">
+          <div data-testid="category-section-block">
             <CategorySection
               title="Laptops"
               products={processedData.laptops as any}
               seeAllLink="/products/laptops"
             />
           </div>
-          <div data-testid="category-section-block" className="stagger-item">
+          <div data-testid="category-section-block">
             <CategorySection
               title="Appliances"
               products={processedData.appliances as any}
               seeAllLink="/products/appliances"
             />
           </div>
-          <div data-testid="category-section-block" className="stagger-item">
+          <div data-testid="category-section-block">
             <CategorySection
               title="Clothes"
               products={processedData.clothes as any}
               seeAllLink="/products/clothes"
             />
           </div>
-          <div data-testid="category-section-block" className="stagger-item">
+          <div data-testid="category-section-block">
             <CategorySection
               title="Footwear"
               products={processedData.footwear as any}
@@ -243,19 +338,14 @@ export default function HomePage() {
           </div>
         </section>
         {/* Best Deals Section */}
-        <section 
-          id="deals-section"
-          ref={(el) => { sectionRefs.current['deals-section'] = el; }}
-          className={`mt-8 sm:mt-12 ${visibleSections.has('deals-section') ? 'animate-section' : 'opacity-0'}`}
-        >
+        <section id="deals-section" className="mt-8 sm:mt-12">
           <BestDealsSection products={processedData.bestDeals as any} />
         </section>
 
         {/* More Products */}
-        <section 
+        <section
           id="more-products-section"
-          ref={(el) => { sectionRefs.current['more-products-section'] = el; }}
-          className={`max-w-7xl mx-auto px-3 sm:px-4 md:px-6 mt-12 sm:mt-16 mb-8 sm:mb-12 ${visibleSections.has('more-products-section') ? 'animate-section' : 'opacity-0'}`}
+          className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 mt-12 sm:mt-16 mb-8 sm:mb-12"
         >
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-3">
             <h2 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-orange-600 via-pink-600 to-purple-600 bg-clip-text text-transparent line-clamp-1">More Products</h2>

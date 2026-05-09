@@ -3,8 +3,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sendOrderConfirmationEmail = exports.sendWelcomeEmail = exports.sendPasswordResetEmail = exports.sendPasswordResetCodeEmail = void 0;
+exports.sendOrderConfirmationEmail = exports.sendWelcomeEmail = exports.sendPasswordResetEmail = exports.sendRegistrationOtpEmail = exports.sendPasswordResetCodeEmail = void 0;
 const nodemailer_1 = __importDefault(require("nodemailer"));
+const toTitleCaseName = (value) => String(value || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(" ");
 // Email transporter configuration
 const createTransporter = () => {
     // For development: Use Gmail or any SMTP service
@@ -32,6 +38,7 @@ const createTransporter = () => {
 // Send password reset verification code email
 const sendPasswordResetCodeEmail = async (to, name, verificationCode) => {
     const transporter = createTransporter();
+    const displayName = toTitleCaseName(name);
     const mailOptions = {
         from: `"${process.env.EMAIL_FROM_NAME || "SmartShop"}" <${process.env.EMAIL_USER}>`,
         to,
@@ -55,7 +62,7 @@ const sendPasswordResetCodeEmail = async (to, name, verificationCode) => {
             <!-- Body -->
             <div style="padding: 40px 30px;">
               <p style="font-size: 16px; color: #333; margin-bottom: 20px;">
-                Hi <strong>${name}</strong>,
+                Hi <strong>${displayName}</strong>,
               </p>
               
               <p style="font-size: 14px; color: #666; line-height: 1.6; margin-bottom: 20px;">
@@ -99,7 +106,7 @@ const sendPasswordResetCodeEmail = async (to, name, verificationCode) => {
       </html>
     `,
         text: `
-      Hi ${name},
+      Hi ${displayName},
 
       We received a request to reset your password.
 
@@ -124,6 +131,105 @@ const sendPasswordResetCodeEmail = async (to, name, verificationCode) => {
     }
 };
 exports.sendPasswordResetCodeEmail = sendPasswordResetCodeEmail;
+// Send registration OTP email with the same style as password reset email
+const sendRegistrationOtpEmail = async (to, name, verificationCode) => {
+    const transporter = createTransporter();
+    const displayName = toTitleCaseName(name);
+    const mailOptions = {
+        from: `"${process.env.EMAIL_FROM_NAME || "SmartShop"}" <${process.env.EMAIL_USER}>`,
+        to,
+        subject: "Registration OTP on SmartShop",
+        html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Registration OTP on SmartShop</title>
+        </head>
+        <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f5f5f5;">
+          <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+            
+            <!-- Header -->
+            <div style="background: linear-gradient(135deg, #f97316 0%, #ec4899 50%, #9333ea 100%); padding: 40px 20px; text-align: center;">
+              <h1 style="color: white; margin: 0; font-size: 28px;">Registration OTP on SmartShop</h1>
+            </div>
+
+            <!-- Body -->
+            <div style="padding: 40px 30px;">
+              <p style="font-size: 16px; color: #333; margin-bottom: 20px;">
+                Hi <strong>${displayName}</strong>,
+              </p>
+              
+              <p style="font-size: 14px; color: #666; line-height: 1.6; margin-bottom: 20px;">
+                We received a request to create your SmartShop account. Use the OTP below to complete your registration:
+              </p>
+
+              <!-- Verification Code Box -->
+              <div style="background: linear-gradient(135deg, #f97316 0%, #ec4899 50%, #9333ea 100%); padding: 30px; border-radius: 10px; text-align: center; margin: 30px 0;">
+                <div style="font-size: 48px; font-weight: bold; color: white; letter-spacing: 8px; font-family: 'Courier New', monospace;">
+                  ${verificationCode}
+                </div>
+              </div>
+
+              <p style="font-size: 14px; color: #666; line-height: 1.6; margin-bottom: 20px; text-align: center;">
+                Enter this OTP on the registration page to continue.
+              </p>
+
+              <!-- Security Notice -->
+              <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; border-radius: 4px;">
+                <p style="margin: 0; font-size: 13px; color: #92400e;">
+                  <strong>⚠️ Security Notice:</strong> This OTP will expire in 10 minutes. If you didn't request this, please ignore this email.
+                </p>
+              </div>
+
+              <p style="font-size: 13px; color: #999; line-height: 1.6;">
+                Never share this OTP with anyone. SmartShop support will never ask for your OTP.
+              </p>
+            </div>
+
+            <!-- Footer -->
+            <div style="background-color: #f9f9f9; padding: 20px; text-align: center; border-top: 1px solid #eee;">
+              <p style="font-size: 12px; color: #999; margin: 0;">
+                © 2025 SmartShop. All rights reserved.
+              </p>
+              <p style="font-size: 11px; color: #ccc; margin: 10px 0 0 0;">
+                This is an automated email, please do not reply.
+              </p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `,
+        text: `
+      Hi ${displayName},
+
+      We received a request to create your SmartShop account.
+
+      Your registration OTP is: ${verificationCode}
+
+      This OTP will expire in 10 minutes.
+
+      If you didn't request this registration, please ignore this email.
+
+      Best regards,
+      SmartShop Team
+    `,
+    };
+    try {
+        const info = await transporter.sendMail(mailOptions);
+        if (!info.accepted || info.accepted.length === 0) {
+            throw new Error("SMTP server did not accept the OTP email recipient");
+        }
+        console.log("Registration OTP email sent:", info.messageId);
+        return info;
+    }
+    catch (error) {
+        console.error("Error sending registration OTP email:", error);
+        throw error;
+    }
+};
+exports.sendRegistrationOtpEmail = sendRegistrationOtpEmail;
 // Send password reset email (old token-based method - keeping for reference)
 const sendPasswordResetEmail = async (to, name, resetToken) => {
     const transporter = createTransporter();

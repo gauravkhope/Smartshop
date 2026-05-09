@@ -326,6 +326,8 @@ export class FakePaymentGateway implements PaymentProvider {
 
         // Validate card token
         if (
+          // Backend-issued token from /api/payments/card
+          confirmToken.startsWith("CardConfirmToken_") ||
           // Legacy test tokens
           confirmToken === "card_token_demo_4242" ||
           confirmToken === "card_token_success" ||

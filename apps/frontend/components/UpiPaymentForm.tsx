@@ -139,7 +139,7 @@ export default function UpiPaymentForm({
             Others simulate <span className="text-red-400">failure</span>.
           </p>
 
-          <div className="grid grid-cols-2 gap-2 max-h-36 overflow-y-auto">
+          <div data-testid="upi-ids" className="grid grid-cols-2 gap-2 max-h-36 overflow-y-auto">
             {DEMO_UPI_IDS.map((id) => (
               <button
                 key={id}
@@ -155,11 +155,11 @@ export default function UpiPaymentForm({
       )}
 
       {/* Header */}
-      <div className="mb-6 pb-6 border-b border-gray-200">
+      <div  data-testid="selected-payment-method" className="mb-6 pb-6 border-b border-gray-200">
         <h3 className="text-xl font-bold text-gray-800 mb-2 flex items-center gap-2">
           <Smartphone size={20} className="text-purple-600" /> UPI Payment
         </h3>
-        <div className="flex justify-between items-center">
+        <div data-testid="payment-product-info" className="flex justify-between items-center">
           <div>
             <p className="text-sm text-gray-600">Product</p>
             <p className="font-semibold text-gray-800 truncate max-w-[240px]">
@@ -183,6 +183,7 @@ export default function UpiPaymentForm({
         <select
           value={mode}
           onChange={(e) => setMode(e.target.value as "upi" | "qr")}
+          data-testid="upi-mode-selector"
           className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none text-sm"
         >
           <option value="upi">Enter UPI ID</option>

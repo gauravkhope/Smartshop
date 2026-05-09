@@ -96,7 +96,7 @@ export async function fetchUserProfile() {
 }
 
 export async function updateUserProfile(data: {
-  name: string;
+  name?: string;
   email?: string;
   avatar?: File | string;
 }) {
@@ -109,7 +109,7 @@ export async function updateUserProfile(data: {
     // If uploading file
     if (data.avatar instanceof File) {
       const fd = new FormData();
-      fd.append("name", data.name);
+      if (data.name) fd.append("name", data.name);
       if (data.email) fd.append("email", data.email);
       fd.append("avatar", data.avatar);
       body = fd;
@@ -175,23 +175,18 @@ export async function fetchLoginHistory() {
 ======================= */
 
 export async function requestPasswordReset(email: string) {
-  try {
-    const res = await fetch(`${API_URL}/auth/forgot-password`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
-    });
+  const res = await fetch(`${API_URL}/auth/forgot-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
 
-    if (!res.ok) {
-      const error = await safeJson(res);
-      throw new Error(error?.message || "Failed to send reset email");
-    }
-
-    return res.json();
-  } catch (err) {
-    console.error("Error requesting password reset:", err);
-    throw err;
+  if (!res.ok) {
+    const error = await safeJson(res);
+    throw new Error(error?.message || "Failed to send reset email");
   }
+
+  return res.json();
 }
 
 export async function resetPasswordWithToken(token: string, password: string) {

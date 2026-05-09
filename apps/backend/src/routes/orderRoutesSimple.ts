@@ -53,10 +53,18 @@ router.post("/", async (req: Request, res: Response) => {
       });
     }
 
+    const lastOrder = await prisma.order.findFirst({
+      where: { userId: parseInt(userId) },
+      orderBy: { orderNumber: "desc" },
+      select: { orderNumber: true },
+    });
+    const nextOrderNumber = lastOrder?.orderNumber ? lastOrder.orderNumber + 1 : 1;
+
     // Create order with items
     const order = await prisma.order.create({
       data: {
         userId: parseInt(userId),
+        orderNumber: nextOrderNumber,
         totalAmount: parseFloat(totalAmount),
         paymentMethod: paymentMethod || "card",
         paymentStatus: "pending",

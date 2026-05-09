@@ -12,6 +12,8 @@
  */
 
 import { Router, Request, Response } from 'express';
+import { authenticateToken } from '../middlewares/authMiddleware';
+import prisma from '../lib/prisma';
 import { 
   createPayment, 
   confirmPayment, 
@@ -22,6 +24,10 @@ import {
   cancelPayment,
   refundPayment,
   handleFakeUpiPayment,
+  validateDemoCardDetails,
+  issueCardConfirmToken,
+  consumeCardConfirmToken,
+  peekCardConfirmTokenProviderId,
 } from '../services/paymentService';
 import { CreatePaymentRequest, ConfirmPaymentRequest, WebhookEvent } from '../lib/payments/paymentProvider';
 
@@ -43,13 +49,13 @@ const router = Router();
  *     metadata?: object
  *   }
  */
-router.post('/create', async (req: Request, res: Response) => {
+router.post('/create', authenticateToken, async (req: Request, res: Response) => {
   try {
     const request: CreatePaymentRequest = req.body;
     const idempotencyKey = req.headers['idempotency-key'] as string | undefined;
     
     // Validation
-    if (!request.orderId || !request.amount || !request.method) {
+    if (!request.orderId || request.amount === undefined || request.amount === null || !request.method) {
       return res.status(400).json({
         error: 'Missing required fields: orderId, amount, method',
       });
@@ -94,15 +100,71 @@ router.post('/create', async (req: Request, res: Response) => {
  *     confirmToken?: string
  *   }
  */
-router.post('/confirm', async (req: Request, res: Response) => {
+router.post('/confirm', authenticateToken, async (req: Request, res: Response) => {
   try {
-    const request: ConfirmPaymentRequest = req.body;
-    
-    if (!request.providerId) {
+    const { providerId, confirmToken, cardConfirmToken } = req.body as {
+      providerId?: string;
+      confirmToken?: string;
+      cardConfirmToken?: string;
+    };
+
+    const effectiveConfirmToken = cardConfirmToken || confirmToken;
+
+    if (!providerId || !effectiveConfirmToken) {
       return res.status(400).json({
-        error: 'Missing required field: providerId',
+        error: 'Missing required fields: providerId and cardConfirmToken',
       });
     }
+
+    const existingPayment = await prisma.payment.findUnique({
+      where: { providerId },
+    });
+
+    if (!existingPayment) {
+      return res.status(404).json({
+        error: 'Payment not found',
+        message: 'No payment exists for the provided providerId',
+      });
+    }
+
+    if (existingPayment.method === 'card') {
+      if (!cardConfirmToken) {
+        return res.status(400).json({
+          error: 'Missing required fields: providerId and cardConfirmToken',
+          message: 'Card confirmation requires cardConfirmToken',
+        });
+      }
+
+      if (!effectiveConfirmToken.startsWith('CardConfirmToken_')) {
+        return res.status(400).json({
+          error: 'Invalid CardConfirmToken',
+          message: 'Card confirmation requires a backend-issued CardConfirmToken',
+        });
+      }
+
+      const mappedProviderId = peekCardConfirmTokenProviderId(effectiveConfirmToken);
+
+      if (!mappedProviderId) {
+        return res.status(400).json({
+          error: 'Invalid CardConfirmToken',
+          message: 'CardConfirmToken is invalid or already used',
+        });
+      }
+
+      if (mappedProviderId !== providerId) {
+        return res.status(400).json({
+          error: 'Invalid providerId for CardConfirmToken',
+          message: 'This CardConfirmToken belongs to a different payment',
+        });
+      }
+
+      consumeCardConfirmToken(effectiveConfirmToken);
+    }
+
+    const request: ConfirmPaymentRequest = {
+      providerId,
+      confirmToken: effectiveConfirmToken,
+    };
     
     console.log(`[PaymentRoutes] Confirming payment ${request.providerId}`);
     
@@ -168,7 +230,7 @@ router.post('/webhook', async (req: Request, res: Response) => {
  * GET /api/payments/status/:providerId
  * Get payment status
  */
-router.get('/status/:providerId', async (req: Request, res: Response) => {
+router.get('/status/:providerId', authenticateToken, async (req: Request, res: Response) => {
   try {
     const { providerId } = req.params;
     
@@ -199,7 +261,7 @@ router.get('/status/:providerId', async (req: Request, res: Response) => {
  * GET /api/payments/order/:orderId
  * Get all payments for an order
  */
-router.get('/order/:orderId', async (req: Request, res: Response) => {
+router.get('/order/:orderId', authenticateToken, async (req: Request, res: Response) => {
   try {
     const { orderId } = req.params;
     
@@ -229,7 +291,7 @@ router.get('/order/:orderId', async (req: Request, res: Response) => {
  *     providerId: string
  *   }
  */
-router.post('/cancel', async (req: Request, res: Response) => {
+router.post('/cancel', authenticateToken, async (req: Request, res: Response) => {
   try {
     const { providerId } = req.body;
     
@@ -262,23 +324,32 @@ router.post('/cancel', async (req: Request, res: Response) => {
  * 
  * Body:
  *   {
- *     providerId: string,
- *     amount?: number (optional, full refund if not specified)
+ *     providerId: string
  *   }
  */
-router.post('/refund', async (req: Request, res: Response) => {
+router.post('/refund', authenticateToken, async (req: Request, res: Response) => {
   try {
-    const { providerId, amount } = req.body;
+    const { providerId } = req.body;
+    const allowedFields = ['providerId'];
+    const requestFields = Object.keys(req.body || {});
+    const hasUnsupportedField = requestFields.some((field) => !allowedFields.includes(field));
     
     if (!providerId) {
       return res.status(400).json({
         error: 'Missing required field: providerId',
       });
     }
+
+    if (hasUnsupportedField) {
+      return res.status(400).json({
+        error: 'Invalid request body: only providerId is allowed for refund',
+        message: 'Refund supports orignal amount full refund only. Remove amount from request body.',
+      });
+    }
     
     console.log(`[PaymentRoutes] Refunding payment ${providerId}`);
     
-    const result = await refundPayment(providerId, amount);
+    const result = await refundPayment(providerId);
     
     res.status(200).json({
       success: true,
@@ -286,9 +357,26 @@ router.post('/refund', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('[PaymentRoutes] Error refunding payment:', error);
+
+    const errorMessage = error?.message || 'Unknown error';
+
+    if (errorMessage === 'Payment not found') {
+      return res.status(404).json({
+        error: 'Payment not found',
+        message: errorMessage,
+      });
+    }
+
+    if (errorMessage.startsWith('Cannot refund payment with status:')) {
+      return res.status(400).json({
+        error: 'Invalid payment status for refund',
+        message: errorMessage,
+      });
+    }
+
     res.status(500).json({
       error: 'Failed to refund payment',
-      message: error.message,
+      message: errorMessage,
     });
   }
 });
@@ -302,7 +390,7 @@ router.post('/refund', async (req: Request, res: Response) => {
  * Response:
  *   { status: "success" | "failed", message: string }
  */
-router.post("/upi", async (req: Request, res: Response) => {
+router.post("/upi", authenticateToken, async (req: Request, res: Response) => {
   try {
     const { upiId } = req.body;
 
@@ -323,6 +411,74 @@ router.post("/upi", async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error("[PaymentRoutes] Error in fake UPI route:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+});
+
+/**
+ * POST /api/payments/card
+ * Validate a demo card and generate a backend CardConfirmToken
+ * --------------------------------------------
+ * Body:
+ *   {
+ *     providerId: string,
+ *     cardNumber: string,
+ *     cvv: string,
+ *     expiryMonth: string,
+ *     expiryYear: string
+ *   }
+ * Response:
+ *   { success: true, status: "success", message: string, cardConfirmToken: string }
+ */
+router.post("/card", authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const { providerId, cardNumber, cvv, expiryMonth, expiryYear } = req.body;
+
+    if (!providerId) {
+      return res.status(400).json({
+        status: "failed",
+        message: "providerId is required",
+      });
+    }
+
+    // Validate that providerId exists and belongs to a valid payment
+    const payment = await prisma.payment.findUnique({
+      where: { providerId },
+    });
+
+    if (!payment) {
+      return res.status(400).json({
+        status: "failed",
+        message: "Invalid providerId. Payment not found.",
+      });
+    }
+
+    const validation = validateDemoCardDetails(cardNumber, cvv, expiryMonth, expiryYear);
+
+    if (!validation.success) {
+      return res.status(400).json({
+        status: "failed",
+        message: validation.message,
+      });
+    }
+
+    const cardConfirmToken = issueCardConfirmToken(providerId);
+
+    console.log(
+      `[PaymentRoutes] Demo card validated for ${validation.last4}; issued ${cardConfirmToken}`
+    );
+
+    return res.status(200).json({
+      success: true,
+      status: "success",
+      message: "Card validated successfully. CardConfirmToken Generated.",
+      cardConfirmToken,
+    });
+  } catch (error: any) {
+    console.error("[PaymentRoutes] Error in fake card route:", error);
     res.status(500).json({
       success: false,
       message: "Internal server error",

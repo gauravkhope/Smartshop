@@ -1,5 +1,7 @@
 import express from "express";
 import { PrismaClient } from "@prisma/client";
+import { sendError } from "../utils/apiResponse";
+import { parsePositiveInt } from "../utils/validation";
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -11,12 +13,67 @@ const prisma = new PrismaClient();
 // GET ALL PRODUCTS (Limited to 100 for performance)
 router.get("/", async (req, res) => {
   try {
-    // Fetch all products (no limit)
-    const products = await prisma.product.findMany({
-      orderBy: { id: "asc" }
+    const { page = "1", limit = "24" } = req.query;
+    const { minPrice, maxPrice } = req.query;
+    const pageNum = parsePositiveInt(page);
+    const requestedLimit = parsePositiveInt(limit);
+    const parsedMinPrice = minPrice !== undefined ? Number(minPrice) : undefined;
+    const parsedMaxPrice = maxPrice !== undefined ? Number(maxPrice) : undefined;
+
+    if (!pageNum) {
+      return sendError(res, 400, "Invalid page parameter. 'page' must be a positive integer.", "INVALID_PAGE");
+    }
+
+    if (!requestedLimit) {
+      return sendError(res, 400, "Invalid limit parameter. 'limit' must be a positive integer.", "INVALID_LIMIT");
+    }
+
+    if (parsedMinPrice !== undefined && (!Number.isFinite(parsedMinPrice) || parsedMinPrice < 0)) {
+      return sendError(res, 400, "Invalid minPrice parameter. 'minPrice' must be a non-negative number.", "INVALID_MIN_PRICE");
+    }
+
+    if (parsedMaxPrice !== undefined && (!Number.isFinite(parsedMaxPrice) || parsedMaxPrice < 0)) {
+      return sendError(res, 400, "Invalid maxPrice parameter. 'maxPrice' must be a non-negative number.", "INVALID_MAX_PRICE");
+    }
+
+    if (parsedMinPrice !== undefined && parsedMaxPrice !== undefined && parsedMinPrice > parsedMaxPrice) {
+      return sendError(res, 400, "Invalid price range. 'minPrice' cannot be greater than 'maxPrice'.", "INVALID_PRICE_RANGE");
+    }
+
+    const pageSize = Math.min(requestedLimit, 100);
+    const skip = (pageNum - 1) * pageSize;
+
+    const where: any = {};
+    if (parsedMinPrice !== undefined || parsedMaxPrice !== undefined) {
+      where.price = {};
+      if (parsedMinPrice !== undefined) where.price.gte = parsedMinPrice;
+      if (parsedMaxPrice !== undefined) where.price.lte = parsedMaxPrice;
+    }
+
+    const [products, total] = await Promise.all([
+      prisma.product.findMany({
+        where,
+        orderBy: { id: "asc" },
+        skip,
+        take: pageSize,
+      }),
+      prisma.product.count({ where }),
+    ]);
+
+    console.log(
+      `✅ Products page fetched: page=${pageNum} limit=${pageSize} returned=${products.length} total=${total}`
+    );
+
+    res.json({
+      products,
+      total,
+      page: pageNum,
+      limit: pageSize,
+      totalPages: Math.ceil(total / pageSize),
+      hasMore: skip + products.length < total,
+      minPrice: parsedMinPrice ?? null,
+      maxPrice: parsedMaxPrice ?? null,
     });
-    console.log(`✅ Total fetched products: ${products.length}`);
-    res.json({ products });
   } catch (error) {
     console.error("❌ Error fetching all products:", error);
     res.status(500).json({ error: "Failed to fetch all products" });
@@ -34,8 +91,18 @@ router.get("/category/:category", async (req, res) => {
     const { page = "1", limit = "24" } = req.query;
 
     const normalizedCategory = category.trim().toLowerCase();
-    const pageNum = Math.max(parseInt(page as string) || 1, 1);
-    const pageSize = Math.min(Math.max(parseInt(limit as string) || 24, 1), 100); // cap at 100
+    const pageNum = parsePositiveInt(page);
+    const requestedLimit = parsePositiveInt(limit);
+
+    if (!pageNum) {
+      return sendError(res, 400, "Invalid page parameter. 'page' must be a positive integer.", "INVALID_PAGE");
+    }
+
+    if (!requestedLimit) {
+      return sendError(res, 400, "Invalid limit parameter. 'limit' must be a positive integer.", "INVALID_LIMIT");
+    }
+
+    const pageSize = Math.min(requestedLimit, 100); // cap at 100
     const skip = (pageNum - 1) * pageSize;
     // Build flexible synonym set to match plural/singular, spaces, and related terms.
     const synonymMap: Record<string, string[]> = {
@@ -87,17 +154,22 @@ router.get("/category/:category", async (req, res) => {
       `🔎 Category lookup: input="${category}" normalized="${normalizedCategory}" synonyms=[${synonyms.join(",")}] matched=${finalProducts.length} total=${total}`
     );
 
-    return res.json({
+    const responseBody: any = {
       data: finalProducts,
       meta: {
-        total, // total before fallback
+        total,
         page: pageNum,
         limit: pageSize,
         hasMore: skip + finalProducts.length < total,
         category: normalizedCategory,
-        synonyms,
       },
-    });
+    };
+
+    if (total === 0) {
+      responseBody.message = "This Category does not exists.";
+    }
+
+    return res.json(responseBody);
   } catch (error) {
     console.error("❌ Error fetching category products:", error);
     res.status(500).json({ error: "Failed to fetch category products" });
@@ -135,6 +207,29 @@ router.get("/brand/:brand", async (req, res) => {
   }
 });
 
+/**
+ * ✅ GET DISTINCT BRANDS
+ * Example: /api/products/brands
+ */
+router.get("/brands", async (_req, res) => {
+  try {
+    const rows = await prisma.product.findMany({
+      select: { brand: true },
+      distinct: ["brand"],
+      orderBy: { brand: "asc" },
+    });
+
+    const brands = rows
+      .map((row) => row.brand?.trim())
+      .filter((brand): brand is string => Boolean(brand));
+
+    res.json({ brands, count: brands.length });
+  } catch (error) {
+    console.error("❌ Error fetching brands:", error);
+    res.status(500).json({ error: "Failed to fetch brands" });
+  }
+});
+
 
 /**
  * ✅ GET RANDOM PRODUCTS (for “More Products” section)
@@ -142,14 +237,163 @@ router.get("/brand/:brand", async (req, res) => {
  */
 router.get("/random", async (req, res) => {
   try {
+    const { count = "12" } = req.query;
+    const requestedCount = parsePositiveInt(count);
+
+    if (!requestedCount) {
+      return sendError(res, 400, "Invalid count parameter. 'count' must be a positive integer.", "INVALID_COUNT");
+    }
+
+    const take = Math.min(requestedCount, 50);
     const products = await prisma.product.findMany({
-      take: 12,
+      take,
       orderBy: { id: "desc" },
     });
     res.json(products.sort(() => 0.5 - Math.random()));
   } catch (error) {
     console.error("❌ Error fetching random products:", error);
     res.status(500).json({ error: "Failed to fetch random products" });
+  }
+});
+
+/**
+ * ✅ GET DISTINCT CATEGORIES
+ * Example: /api/products/categories
+ */
+router.get("/categories", async (_req, res) => {
+  try {
+    const rows = await prisma.product.findMany({
+      select: { category: true },
+      distinct: ["category"],
+      orderBy: { category: "asc" },
+    });
+
+    const categories = rows
+      .map((row) => row.category?.trim())
+      .filter((category): category is string => Boolean(category));
+
+    res.json({ categories, count: categories.length });
+  } catch (error) {
+    console.error("❌ Error fetching categories:", error);
+    res.status(500).json({ error: "Failed to fetch categories" });
+  }
+});
+
+/**
+ * ✅ SEARCH PRODUCTS (paginated)
+ * Example: /api/products/search?q=smartphone&page=1&limit=10
+ */
+router.get("/search", async (req, res) => {
+  try {
+    const { q = "", page = "1", limit = "24" } = req.query;
+    const query = String(q).trim();
+
+    if (!query) {
+      return sendError(res, 400, "Missing search query. Use 'q' parameter.", "MISSING_SEARCH_QUERY");
+    }
+
+    const pageNum = parsePositiveInt(page);
+    const requestedLimit = parsePositiveInt(limit);
+
+    if (!pageNum) {
+      return sendError(res, 400, "Invalid page parameter. 'page' must be a positive integer.", "INVALID_PAGE");
+    }
+
+    if (!requestedLimit) {
+      return sendError(res, 400, "Invalid limit parameter. 'limit' must be a positive integer.", "INVALID_LIMIT");
+    }
+
+    const pageSize = Math.min(requestedLimit, 100);
+    const skip = (pageNum - 1) * pageSize;
+
+    const where = {
+      OR: [
+        { name: { contains: query, mode: "insensitive" as const } },
+        { category: { contains: query, mode: "insensitive" as const } },
+        { mainCategory: { contains: query, mode: "insensitive" as const } },
+        { brand: { contains: query, mode: "insensitive" as const } },
+        { description: { contains: query, mode: "insensitive" as const } },
+      ],
+    };
+
+    const [products, total] = await Promise.all([
+      prisma.product.findMany({
+        where,
+        orderBy: { id: "desc" },
+        skip,
+        take: pageSize,
+      }),
+      prisma.product.count({ where }),
+    ]);
+
+    const responseBody: any = {
+      data: products,
+      meta: {
+        total,
+        page: pageNum,
+        limit: pageSize,
+        hasMore: skip + products.length < total,
+        query,
+      },
+    };
+
+    if (total === 0) {
+      responseBody.message = "No products found for this query.";
+    }
+
+    res.json(responseBody);
+  } catch (error) {
+    console.error("❌ Error searching products:", error);
+    res.status(500).json({ error: "Failed to search products" });
+  }
+});
+
+/**
+ * ✅ SEARCH SUGGESTIONS
+ * Example: /api/products/search/suggestions?q=smart
+ */
+router.get("/search/suggestions", async (req, res) => {
+  try {
+    const { q = "", limit = "10" } = req.query;
+    const query = String(q).trim();
+
+    if (!query) {
+      return sendError(res, 400, "Missing search query. Use 'q' parameter.", "MISSING_SEARCH_QUERY");
+    }
+
+    const requestedLimit = parsePositiveInt(limit);
+    if (!requestedLimit) {
+      return sendError(res, 400, "Invalid limit parameter. 'limit' must be a positive integer.", "INVALID_LIMIT");
+    }
+
+    const take = Math.min(requestedLimit, 25);
+    const rows = await prisma.product.findMany({
+      where: {
+        OR: [
+          { name: { contains: query, mode: "insensitive" } },
+          { brand: { contains: query, mode: "insensitive" } },
+        ],
+      },
+      select: {
+        name: true,
+        brand: true,
+      },
+      take,
+      orderBy: { id: "desc" },
+    });
+
+    const suggestions = Array.from(
+      new Set(
+        rows
+          .flatMap((row) => [row.name?.trim(), row.brand?.trim()])
+          .filter((value): value is string => Boolean(value))
+      )
+    ).slice(0, take);
+
+    res.json({ suggestions, count: suggestions.length, query });
+  } catch (error) {
+    console.error("❌ Error fetching search suggestions:", error);
+    res.status(500).json({ error: "Failed to fetch search suggestions" });
   }
 });
 
@@ -161,9 +405,14 @@ router.get("/random", async (req, res) => {
 router.get("/:id", async (req, res) => {
   try {
     const { id } = req.params;
+    const productId = parsePositiveInt(id);
+
+    if (!productId) {
+      return sendError(res, 400, "Invalid product ID", "INVALID_PRODUCT_ID");
+    }
 
     const product = await prisma.product.findUnique({
-      where: { id: parseInt(id) },
+      where: { id: productId },
     });
 
     if (!product) {

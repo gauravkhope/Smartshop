@@ -2,9 +2,8 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
-import { Eye, EyeOff, Mail, Lock, ShoppingCart, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, Loader2, Sparkles, ShieldCheck } from "lucide-react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -15,9 +14,7 @@ export default function LoginPage() {
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
 
   const { login } = useAuth();
-  const router = useRouter();
 
-  // Form validation
   const validateForm = () => {
     const newErrors: { email?: string; password?: string } = {};
 
@@ -45,7 +42,6 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       await login(email, password, rememberMe);
-      // Redirect handled by AuthContext
     } catch (error) {
       console.error("Login error:", error);
     } finally {
@@ -54,197 +50,238 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-pink-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2 mb-4 group">
-            <ShoppingCart className="w-8 h-8 text-indigo-600 dark:text-indigo-400 group-hover:scale-110 transition" />
-            <h1 className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">SmartShop</h1>
-          </Link>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Welcome Back!</h2>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">
-            Sign in to continue your shopping
-          </p>
-        </div>
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-orange-50 via-pink-50 to-purple-50 px-4 py-8 dark:from-gray-950 dark:via-slate-900 dark:to-gray-950 sm:px-6 lg:px-8">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(244,114,182,0.18),_transparent_26%),radial-gradient(circle_at_top_right,_rgba(59,130,246,0.14),_transparent_24%),radial-gradient(circle_at_bottom,_rgba(168,85,247,0.12),_transparent_24%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.18)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.18)_1px,transparent_1px)] bg-[size:72px_72px] opacity-25 [mask-image:radial-gradient(circle_at_center,black,transparent_76%)] dark:opacity-10" />
 
-        {/* Login Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 border border-gray-100 dark:border-gray-700">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Email Field */}
-            <div>
-              <label htmlFor="email" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                Email Address
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    setErrors({ ...errors, email: undefined });
-                  }}
-                  className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white ${
-                    errors.email ? "border-red-500" : "border-gray-300"
-                  }`}
-                  placeholder="you@example.com"
-                />
-              </div>
-              {errors.email && (
-                <p className="mt-1 text-sm text-red-500">{errors.email}</p>
-              )}
-            </div>
+<div className="absolute top-2 left-3 z-20 sm:top-3 sm:left-5 lg:top-4 lg:left-6">
+  <h1 className="pb-1 text-3xl font-extrabold tracking-tight bg-gradient-to-r from-pink-500 via-orange-400 to-red-500 bg-clip-text text-transparent sm:text-4xl lg:text-5xl">
+    SmartShop
+  </h1>
+</div>
 
-            {/* Password Field */}
-            <div>
-              <label htmlFor="password" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                Password
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    setErrors({ ...errors, password: undefined });
-                  }}
-                  className={`w-full pl-10 pr-12 py-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white ${
-                    errors.password ? "border-red-500" : "border-gray-300"
-                  }`}
-                  placeholder="••••••••"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
-                  ) : (
-                    <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
-                  )}
-                </button>
-              </div>
-              {errors.password && (
-                <p className="mt-1 text-sm text-red-500">{errors.password}</p>
-              )}
-            </div>
+      <div className="relative mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-6xl items-center justify-center">
+        <div className="flex w-full justify-center">
+          <div className="w-full max-w-md">
+            <div className="mb-8 text-center">
+              <Link href="/" className="inline-flex items-center gap-3 rounded-2xl border border-white/40 bg-white/35 px-5 py-3 shadow-[0_12px_30px_rgba(15,23,42,0.08)] backdrop-blur-xl transition hover:-translate-y-0.5 dark:border-white/10 dark:bg-white/5">
+                <span className="flex h-14 w-14 items-center justify-center rounded-3xl bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-600 shadow-[0_10px_30px_rgba(168,85,247,0.45)] backdrop-blur-md border border-white/10">
+  <div className="relative flex items-center justify-center">
+    <div className="absolute h-8 w-8 rounded-full bg-white/20 blur-md"></div>
 
-            {/* Remember Me & Forgot Password */}
-            <div className="flex items-center justify-between">
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                />
-                <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">
-                  Remember me
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      className="relative h-7 w-7 text-white drop-shadow-md"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M3 6h2l2.4 9.2a1 1 0 0 0 1 .8h8.8a1 1 0 0 0 1-.8L21 8H7"
+      />
+      <circle cx="10" cy="19" r="1.4" />
+      <circle cx="18" cy="19" r="1.4" />
+    </svg>
+  </div>
+</span>
+                <span className="text-2xl font-extrabold tracking-[-0.05em] bg-gradient-to-r from-pink-500 via-orange-400 to-red-500 bg-clip-text text-transparent">
+                  SmartShop
                 </span>
-              </label>
-              <Link
-                href="/forgot-password"
-                className="text-sm font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
-              >
-                Forgot password?
+              </Link>
+              <p className="mt-2 text-gray-600 dark:text-gray-400">Sign in to continue your shopping</p>
+            </div>
+
+            <div className="relative rounded-[2rem] border border-white/50 bg-white/45 p-8 shadow-[0_20px_80px_rgba(15,23,42,0.14)] backdrop-blur-3xl dark:border-white/10 dark:bg-gray-900/40">
+              <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent dark:via-white/20" />
+
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div>
+                  <label htmlFor="email" className="mb-2 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    Email Address
+                  </label>
+                  <div className="group relative transition-transform duration-300 hover:-translate-y-0.5">
+                    <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 rounded-lg bg-gradient-to-br from-orange-500 to-rose-500 p-1.5 text-white shadow-[0_6px_14px_rgba(249,115,22,0.35)]">
+                      <Mail className="h-4 w-4" />
+                    </span>
+                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-white/40 via-white/20 to-white/30 opacity-0 blur-xl transition-opacity duration-300 group-focus-within:opacity-100 dark:from-orange-500/10 dark:via-fuchsia-500/10 dark:to-purple-500/10" />
+                    <input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        setErrors({ ...errors, email: undefined });
+                      }}
+                      className={`relative w-full rounded-2xl border px-4 py-3 pl-14 text-gray-800 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_8px_20px_-12px_rgba(15,23,42,0.35)] outline-none transition-all duration-300 placeholder:text-gray-400 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_14px_26px_-14px_rgba(15,23,42,0.42)] hover:border-orange-300/80 focus:bg-white focus:shadow-[0_0_0_4px_rgba(251,146,60,0.18),0_14px_26px_-14px_rgba(249,115,22,0.5)] dark:text-white ${
+                        errors.email
+                          ? "border-red-400 bg-white/90 dark:border-red-400/70 dark:bg-gray-800/80"
+                          : "border-gray-200/80 bg-gradient-to-br from-white via-amber-50/30 to-rose-50/40 dark:border-white/10 dark:bg-white/5"
+                      }`}
+                      placeholder="you@example.com"
+                    />
+                  </div>
+                  {errors.email && <p className="mt-2 text-sm text-red-500">{errors.email}</p>}
+                </div>
+
+                <div>
+                  <label htmlFor="password" className="mb-2 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    Password
+                  </label>
+                  <div className="group relative transition-transform duration-300 hover:-translate-y-0.5">
+                    <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 rounded-lg bg-gradient-to-br from-fuchsia-500 to-purple-600 p-1.5 text-white shadow-[0_6px_14px_rgba(147,51,234,0.35)]">
+                      <Lock className="h-4 w-4" />
+                    </span>
+                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-white/40 via-white/20 to-white/30 opacity-0 blur-xl transition-opacity duration-300 group-focus-within:opacity-100 dark:from-fuchsia-500/10 dark:via-purple-500/10 dark:to-blue-500/10" />
+                    <input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        setErrors({ ...errors, password: undefined });
+                      }}
+                      className={`relative w-full rounded-2xl border px-4 py-3 pl-14 pr-12 text-gray-800 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_8px_20px_-12px_rgba(15,23,42,0.35)] outline-none transition-all duration-300 placeholder:text-gray-400 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_14px_26px_-14px_rgba(15,23,42,0.42)] hover:border-fuchsia-300/80 focus:bg-white focus:shadow-[0_0_0_4px_rgba(232,121,249,0.18),0_14px_26px_-14px_rgba(168,85,247,0.5)] dark:text-white ${
+                        errors.password
+                          ? "border-red-400 bg-white/90 dark:border-red-400/70 dark:bg-gray-800/80"
+                          : "border-gray-200/80 bg-gradient-to-br from-white via-slate-50 to-slate-100 dark:border-white/10 dark:bg-white/5"
+                      }`}
+                      placeholder="••••••••"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 flex items-center px-4 text-gray-500 transition hover:text-gray-700 dark:text-gray-300 dark:hover:text-white"
+                    >
+                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
+                  </div>
+                  {errors.password && <p className="mt-2 text-sm text-red-500">{errors.password}</p>}
+                </div>
+
+                <div className="flex items-center justify-between gap-4">
+                  <label className="group inline-flex cursor-pointer items-center gap-3">
+                    <span className="relative flex h-5 w-5 items-center justify-center">
+                      <input
+                        type="checkbox"
+                        checked={rememberMe}
+                        onChange={(e) => setRememberMe(e.target.checked)}
+                        className="peer sr-only"
+                      />
+                      <span className="absolute inset-0 rounded-md border border-white/35 bg-white/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_8px_18px_-10px_rgba(15,23,42,0.35)] transition duration-300 peer-hover:-translate-y-0.5 peer-hover:border-orange-300/80 peer-hover:shadow-[0_0_0_4px_rgba(251,146,60,0.12),0_10px_24px_-12px_rgba(249,115,22,0.35)] peer-checked:border-transparent peer-checked:bg-gradient-to-br peer-checked:from-orange-500 peer-checked:via-fuchsia-500 peer-checked:to-purple-600 peer-checked:shadow-[0_0_0_4px_rgba(251,146,60,0.18),0_12px_26px_-12px_rgba(168,85,247,0.45)] dark:border-white/15 dark:bg-white/5" />
+                      <svg className="relative h-3.5 w-3.5 scale-0 text-white transition duration-200 peer-checked:scale-100" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </span>
+                    <span className="text-sm font-medium text-gray-700 transition group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white">
+                      Remember me
+                    </span>
+                  </label>
+                  <Link
+                    href="/forgot-password"
+                    className="group inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/55 px-4 py-2 text-sm font-semibold text-transparent shadow-[0_10px_24px_rgba(15,23,42,0.08)] backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-orange-300/70 hover:bg-white/80 hover:shadow-[0_0_0_4px_rgba(251,146,60,0.12),0_14px_30px_-14px_rgba(249,115,22,0.4)] dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
+                  >
+                    <span className="bg-gradient-to-r from-pink-500 via-orange-400 to-red-500 bg-clip-text text-transparent transition group-hover:from-orange-300 group-hover:via-fuchsia-300 group-hover:to-pink-300">
+                      Forgot password?
+                    </span>
+                  </Link>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="group relative isolate flex w-full items-center justify-center overflow-hidden rounded-2xl border border-indigo-300/60 px-4 py-3.5 font-extrabold tracking-wide text-white transition-all duration-300 hover:-translate-y-1 hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <span className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600" />
+                  <span className="pointer-events-none absolute inset-0 rounded-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.35),inset_0_-1px_0_rgba(49,46,129,0.45),0_14px_24px_-14px_rgba(79,70,229,0.8)]" />
+                  <span className="pointer-events-none absolute -left-10 top-0 h-full w-14 rotate-12 bg-white/20 blur-sm transition-transform duration-500 group-hover:translate-x-[240px]" />
+                  <span className="relative flex items-center justify-center gap-2">
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        Signing in...
+                      </>
+                    ) : (
+                      <>
+                        Sign In
+                      </>
+                    )}
+                  </span>
+                </button>
+              </form>
+
+              <div className="relative my-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300/80 dark:border-white/10" />
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="rounded-full border border-white/40 bg-white/70 px-3 py-1 text-gray-500 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-gray-900/50 dark:text-gray-400">
+                    Or continue with
+                  </span>
+                </div>
+              </div>
+
+               {/* Social logins */}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
+            <button
+              type="button"
+              className="group relative isolate min-h-[72px] overflow-hidden rounded-2xl border border-gray-200/70 px-4 py-3.5 text-left transition-all duration-300 hover:-translate-y-1.5 hover:scale-[1.02] sm:min-h-0 sm:py-3"
+            >
+              <span className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br from-white via-slate-50 to-slate-100" />
+              <span className="pointer-events-none absolute inset-0 rounded-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.9),inset_0_-1px_0_rgba(148,163,184,0.35),0_12px_20px_-12px_rgba(15,23,42,0.45)]" />
+              <span className="pointer-events-none absolute -right-8 -top-10 h-24 w-24 rounded-full bg-rose-300/30 blur-2xl transition-all duration-300 group-hover:scale-125" />
+              <span className="pointer-events-none absolute -left-8 -bottom-8 h-24 w-24 rounded-full bg-sky-300/25 blur-2xl transition-all duration-300 group-hover:scale-125" />
+
+              <span className="relative flex items-center gap-3 sm:gap-2.5">
+                <span className="grid h-10 w-10 place-items-center rounded-xl bg-white shadow-[0_5px_12px_rgba(2,6,23,0.18),inset_0_1px_0_rgba(255,255,255,0.9)] sm:h-9 sm:w-9">
+                  <span className="bg-gradient-to-r from-blue-600 via-red-500 to-yellow-500 bg-clip-text text-xl font-black text-transparent sm:text-lg">
+                    G
+                  </span>
+                </span>
+                <span>
+                  <span className="block text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-500 sm:text-xs sm:tracking-[0.16em]">Continue</span>
+                  <span className="block text-[15px] font-extrabold leading-tight text-gray-800 sm:text-sm">Google</span>
+                </span>
+              </span>
+            </button>
+
+            <button
+              type="button"
+              className="group relative isolate min-h-[72px] overflow-hidden rounded-2xl border border-blue-200/60 px-4 py-3.5 text-left transition-all duration-300 hover:-translate-y-1.5 hover:scale-[1.02] sm:min-h-0 sm:py-3"
+            >
+              <span className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-50 via-indigo-50 to-blue-100" />
+              <span className="pointer-events-none absolute inset-0 rounded-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.85),inset_0_-1px_0_rgba(59,130,246,0.28),0_12px_20px_-12px_rgba(37,99,235,0.55)]" />
+              <span className="pointer-events-none absolute -right-6 -top-8 h-24 w-24 rounded-full bg-blue-300/35 blur-2xl transition-all duration-300 group-hover:scale-125" />
+              <span className="pointer-events-none absolute left-1/2 top-1/2 h-24 w-24 -translate-x-1/2 -translate-y-1/2 rounded-full bg-indigo-300/20 blur-2xl transition-all duration-300 group-hover:scale-125" />
+
+              <span className="relative flex items-center gap-3 sm:gap-2.5">
+                <span className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-xl font-black text-white shadow-[0_7px_14px_rgba(37,99,235,0.45)] sm:h-9 sm:w-9 sm:text-lg">
+                  f
+                </span>
+                <span>
+                  <span className="block text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-600 sm:text-xs sm:tracking-[0.16em]">Continue</span>
+                  <span className="block text-[15px] font-extrabold leading-tight text-slate-800 sm:text-sm">Facebook</span>
+                </span>
+              </span>
+            </button>
+          </div>
+
+              <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
+                Don&apos;t have an account?{" "}
+                <Link href="/register" className="font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">
+                  Sign up for free
+                </Link>
+              </p>
+            </div>
+
+            <div className="mt-6 text-center">
+              <Link href="/" className="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
+                ← Continue as guest
               </Link>
             </div>
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Signing in...
-                </>
-              ) : (
-                "Sign In"
-              )}
-            </button>
-          </form>
-
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-                Or continue with
-              </span>
-            </div>
           </div>
-
-          {/* Social Login Buttons */}
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition"
-            >
-              <svg className="w-5 h-5" viewBox="0 0 24 24">
-                <path
-                  fill="currentColor"
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                />
-                <path
-                  fill="currentColor"
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                />
-                <path
-                  fill="currentColor"
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                />
-                <path
-                  fill="currentColor"
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                />
-              </svg>
-              <span className="text-sm font-medium">Google</span>
-            </button>
-            <button
-              type="button"
-              className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition"
-            >
-              <svg className="w-5 h-5 fill-current text-blue-600" viewBox="0 0 24 24">
-                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-              </svg>
-              <span className="text-sm font-medium">Facebook</span>
-            </button>
-          </div>
-
-          {/* Sign Up Link */}
-          <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
-            Don&apos;t have an account?{" "}
-            <Link
-              href="/register"
-              className="font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
-            >
-              Sign up for free
-            </Link>
-          </p>
-        </div>
-
-        {/* Guest Checkout Link */}
-        <div className="mt-6 text-center">
-          <Link
-            href="/"
-            className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-          >
-            ← Continue as guest
-          </Link>
         </div>
       </div>
     </div>

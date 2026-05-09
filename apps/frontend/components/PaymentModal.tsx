@@ -20,9 +20,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { X, CreditCard, Smartphone, Wallet, CheckCircle, XCircle, Loader, AlertCircle, Building2, DollarSign } from "lucide-react";
 import Image from "next/image";
-import axios from "axios";
+import api from "@/lib/axios";
 import CardPaymentForm from "./CardPaymentForm";
 import UpiPaymentForm from "./UpiPaymentForm";
 
@@ -49,6 +50,7 @@ interface PaymentResponse {
   deeplink?: string;
   upiDeepLink?: string;
   qrCode?: string;
+  cardConfirmToken?: string;
   metadata?: any;
 }
 
@@ -63,6 +65,7 @@ export default function PaymentModal({
   onError,
   initialMethod,
 }: PaymentModalProps) {
+  const router = useRouter();
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>(initialMethod || "card");
   const [status, setStatus] = useState<PaymentStatus>("idle");
   const [error, setError] = useState<string>("");
@@ -86,12 +89,41 @@ export default function PaymentModal({
   const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
 
   // Format amount for display
+  const isCashOnDelivery = selectedMethod === "cod";
+
   const formatAmount = (amt: number) => {
     return new Intl.NumberFormat("en-IN", {
       style: "currency",
       currency: currency,
       maximumFractionDigits: 0,
     }).format(amt / 100);
+  };
+
+  const handleAuthFailure = (err: any): boolean => {
+    const statusCode = Number(err?.response?.status);
+    if (statusCode !== 401 && statusCode !== 403) {
+      return false;
+    }
+
+    const message = "Session expired. Please login again to continue payment.";
+    if (pollingInterval) {
+      clearInterval(pollingInterval);
+      setPollingInterval(null);
+    }
+
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem("token");
+      window.localStorage.removeItem("user");
+      window.sessionStorage.removeItem("token");
+      window.sessionStorage.removeItem("user");
+    }
+
+    setError(message);
+    setStatus("failed");
+    onError?.(message);
+    onClose();
+    router.push("/login");
+    return true;
   };
 
   // Clear state on close
@@ -144,7 +176,7 @@ export default function PaymentModal({
       if (selectedMethod === "card") setShowCardForm(true);
   setMethodLocked(true);
 
-  const response = await axios.post("http://localhost:5000/api/payments/create", {
+  const response = await api.post("/payments/create", {
         orderId,
         amount,
         currency,
@@ -173,11 +205,15 @@ export default function PaymentModal({
         // Other methods transition to pending and render their specific UIs
         setStatus("pending");
       }
+
+      return payment;
     } catch (err: any) {
+      if (handleAuthFailure(err)) return;
       console.error("Error creating payment:", err);
       setError(err.response?.data?.error || "Failed to create payment");
       setStatus("failed");
       onError?.(err.response?.data?.error || "Failed to create payment");
+      return null;
     }
   };
 
@@ -189,7 +225,7 @@ export default function PaymentModal({
       setStatus("confirming");
       setError("");
 
-  const response = await axios.post("http://localhost:5000/api/payments/confirm", {
+  const response = await api.post("/payments/confirm", {
         providerId: paymentData.providerId,
         confirmToken: token,
       });
@@ -215,7 +251,48 @@ export default function PaymentModal({
         startPolling(paymentData.providerId);
       }
     } catch (err: any) {
+      if (handleAuthFailure(err)) return;
       console.error("Error confirming payment:", err);
+      setError(err.response?.data?.error || "Failed to confirm payment");
+      setStatus("failed");
+      onError?.(err.response?.data?.error || "Failed to confirm payment");
+    }
+  };
+
+  const confirmCardPayment = async (cardConfirmToken: string) => {
+    if (!paymentData) return;
+
+    try {
+      setStatus("confirming");
+      setError("");
+
+      const response = await api.post("/payments/confirm", {
+        providerId: paymentData.providerId,
+        cardConfirmToken,
+      });
+
+      const result = response.data.payment;
+
+      if (result.status === "succeeded") {
+        setStatus("succeeded");
+        if (pollingInterval) {
+          clearInterval(pollingInterval);
+          setPollingInterval(null);
+        }
+        setTimeout(() => {
+          onSuccess(paymentData.paymentId);
+        }, 1500);
+      } else if (result.status === "failed") {
+        setStatus("failed");
+        setError(result.message || "Payment failed");
+        onError?.(result.message || "Payment failed");
+      } else {
+        setStatus("pending");
+        startPolling(paymentData.providerId);
+      }
+    } catch (err: any) {
+      if (handleAuthFailure(err)) return;
+      console.error("Error confirming card payment:", err);
       setError(err.response?.data?.error || "Failed to confirm payment");
       setStatus("failed");
       onError?.(err.response?.data?.error || "Failed to confirm payment");
@@ -230,7 +307,7 @@ export default function PaymentModal({
 
     const interval = setInterval(async () => {
       try {
-  const response = await axios.get(`http://localhost:5000/api/payments/status/${providerId}`);
+  const response = await api.get(`/payments/status/${providerId}`);
         const payment = response.data.payment;
 
         if (payment.status === "succeeded") {
@@ -247,7 +324,11 @@ export default function PaymentModal({
           setPollingInterval(null);
           onError?.("Payment failed");
         }
-      } catch (err) {
+      } catch (err: any) {
+        if (handleAuthFailure(err)) {
+          clearInterval(interval);
+          return;
+        }
         console.error("Error polling status:", err);
       }
     }, 2000);
@@ -260,7 +341,7 @@ export default function PaymentModal({
     if (!paymentData) return;
 
     try {
-  await axios.post("http://localhost:5000/api/payments/webhook", {
+  await api.post("/payments/webhook", {
         providerId: paymentData.providerId,
         event,
       });
@@ -287,16 +368,28 @@ export default function PaymentModal({
     try {
       setStatus("creating");
       setCardProcessing(true);
-      // Keep the form visible while processing
-      if (!paymentData) {
-        await createPayment();
+      const currentPayment = paymentData || (await createPayment());
+
+      if (!currentPayment?.providerId) {
+        throw new Error("Payment not initialized");
       }
-      setTimeout(async () => {
-        setStatus("confirming");
-        const cardToken = `card_token_${cardData.cardNumber.slice(-4)}`;
-        await confirmPayment(cardToken);
-        setCardProcessing(false);
-      }, 800);
+
+      const response = await api.post("/payments/card", {
+        providerId: currentPayment.providerId,
+        cardNumber: cardData.cardNumber,
+        cvv: cardData.cvv,
+        expiryMonth: cardData.expiryMonth,
+        expiryYear: cardData.expiryYear,
+        cardType: cardData.cardType,
+      });
+
+      const cardConfirmToken = response.data.cardConfirmToken as string | undefined;
+      if (!cardConfirmToken) {
+        throw new Error("CardConfirmToken not returned by backend");
+      }
+
+      await confirmCardPayment(cardConfirmToken);
+      setCardProcessing(false);
     } catch (err) {
       console.error("Card payment error:", err);
       setError("Card payment failed");
@@ -308,10 +401,7 @@ export default function PaymentModal({
   // Handle card form cancel
   const handleCardCancel = () => {
     if (cardProcessing) return; // Prevent cancel during processing
-    setShowCardForm(false);
-    setSelectedMethod("card");
-    setStatus("idle");
-    setMethodLocked(false);
+    onClose();
   };
 
   // Handle UPI form confirmation
@@ -369,11 +459,11 @@ export default function PaymentModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div data-testid="payment-modal" className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div>
-            <h2 className="text-2xl font-bold text-gray-800">Complete Payment</h2>
+            <h2 data-testid="payment-title" className="text-2xl font-bold text-gray-800">Complete Payment</h2>
             <p className="text-sm text-gray-600 mt-1">
               Order #{orderId} • {formatAmount(amount)}
             </p>
@@ -405,7 +495,9 @@ export default function PaymentModal({
               <div className="inline-block p-4 bg-green-100 rounded-full mb-4">
                 <CheckCircle size={48} className="text-green-600" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-800 mb-2">Payment Successful!</h3>
+              <h3 className="text-2xl font-bold text-gray-800 mb-2">
+                {isCashOnDelivery ? "Order Confirmed" : "Payment Successful!"}
+              </h3>
               <p className="text-gray-600">Redirecting to order confirmation...</p>
             </div>
           )}

@@ -3,22 +3,27 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const returnReplaceRoutes_1 = __importDefault(require("./routes/returnReplaceRoutes"));
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const productroutes_1 = __importDefault(require("./routes/productroutes"));
 const authRoutes_1 = __importDefault(require("./routes/authRoutes"));
 const userRoutes_1 = __importDefault(require("./routes/userRoutes"));
+const authMiddleware_1 = require("./middlewares/authMiddleware");
 const dotenv_1 = __importDefault(require("dotenv"));
 const userService_1 = require("../lib/userService");
 const path_1 = __importDefault(require("path"));
+const errorHandler_1 = require("./middlewares/errorHandler");
 console.log("✅ Loading order routes...");
 const orderRoutes_1 = __importDefault(require("./routes/orderRoutes"));
 console.log("✅ Order routes loaded successfully!");
 console.log("✅ Loading payment routes...");
 const paymentRoutes_1 = __importDefault(require("./routes/paymentRoutes"));
 console.log("✅ Payment routes loaded successfully!");
-dotenv_1.default.config({ path: __dirname + "/../.env" });
-dotenv_1.default.config();
+dotenv_1.default.config({
+    path: path_1.default.resolve(__dirname, "../.env"),
+    override: true,
+});
 // ====================================
 // CORS Configuration with Environment Support
 // ====================================
@@ -49,7 +54,8 @@ app.use((0, cors_1.default)({
     allowedHeaders: ["Content-Type", "Authorization"],
     maxAge: 86400, // 24 hours
 }));
-app.use(express_1.default.json());
+app.use(express_1.default.json({ limit: "1mb" }));
+app.use(express_1.default.urlencoded({ extended: true, limit: "1mb" }));
 // Log CORS configuration
 if (process.env.NODE_ENV !== "production") {
     console.log("✅ CORS Origins configured:", corsOrigins);
@@ -74,6 +80,7 @@ app.get("/api/test", (req, res) => {
 app.use("/api/products", productroutes_1.default);
 app.use("/api/auth", authRoutes_1.default);
 app.use("/api/user", userRoutes_1.default);
+app.use("/api/orders", returnReplaceRoutes_1.default);
 app.use("/api/orders", orderRoutes_1.default);
 app.use("/api/payments", paymentRoutes_1.default);
 const userService_2 = require("../lib/userService");
@@ -95,26 +102,90 @@ app.post('/api/verify-password', async (req, res) => {
     }
 });
 // Password update route
-app.post('/api/update-password', async (req, res) => {
+app.post('/api/update-password', authMiddleware_1.authenticateToken, async (req, res) => {
     const { userId, currentPassword, newPassword } = req.body;
-    if (!userId || !currentPassword || !newPassword) {
-        return res.status(400).json({ error: 'Missing required fields' });
+    if (!req.user) {
+        return res.status(401).json({ success: false, error: 'Unauthorized', message: 'Unauthorized' });
+    }
+    if (!currentPassword) {
+        return res.status(400).json({
+            success: false,
+            error: 'Current password is required',
+            message: 'Current password is required',
+        });
+    }
+    if (!newPassword) {
+        return res.status(400).json({
+            success: false,
+            error: 'New password is required',
+            message: 'New password is required',
+        });
+    }
+    if (typeof currentPassword !== 'string' || typeof newPassword !== 'string') {
+        return res.status(400).json({
+            success: false,
+            error: 'Password fields must be strings',
+            message: 'Password fields must be strings',
+        });
+    }
+    if (newPassword.length < 8) {
+        return res.status(400).json({
+            success: false,
+            error: 'New password must be at least 8 characters',
+            message: 'New password must be at least 8 characters',
+        });
+    }
+    if (currentPassword === newPassword) {
+        return res.status(400).json({
+            success: false,
+            error: 'New password must be different from current password',
+            message: 'New password must be different from current password',
+        });
+    }
+    const authenticatedUserId = req.user.id;
+    const authenticatedUserEmail = req.user.email;
+    // Optional body userId must match authenticated identity if provided.
+    if (userId && Number(userId) !== authenticatedUserId) {
+        return res.status(403).json({
+            success: false,
+            error: 'Forbidden: cannot update another user password',
+            message: 'Forbidden: cannot update another user password',
+        });
     }
     try {
-        const result = await (0, userService_1.updateUserPassword)(userId, currentPassword, newPassword);
+        const result = await (0, userService_1.updateUserPassword)(authenticatedUserEmail, currentPassword, newPassword);
         if (result.success) {
-            return res.status(200).json({ success: true });
+            return res.status(200).json({ success: true, message: 'Password updated successfully' });
         }
         else {
-            // Return 401 for wrong password or user not found
-            return res.status(401).json({ success: false, error: result.error || 'You have entered wrong Password' });
+            if (result.error === 'Current password is incorrect') {
+                return res.status(401).json({
+                    success: false,
+                    error: 'Current password is incorrect',
+                    message: 'Current password is incorrect',
+                });
+            }
+            if (result.error === 'User not found') {
+                return res.status(404).json({
+                    success: false,
+                    error: 'User not found',
+                    message: 'User not found',
+                });
+            }
+            return res.status(400).json({
+                success: false,
+                error: result.error || 'Failed to update password',
+                message: result.error || 'Failed to update password',
+            });
         }
     }
     catch (err) {
         console.error('Password update error:', err);
-        return res.status(500).json({ error: 'Server error' });
+        return res.status(500).json({ success: false, error: 'Server error', message: 'Server error' });
     }
 });
+app.use(errorHandler_1.notFoundHandler);
+app.use(errorHandler_1.errorHandler);
 // ====================================
 // ENVIRONMENT VALIDATION
 // ====================================

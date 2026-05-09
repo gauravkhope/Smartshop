@@ -6,6 +6,10 @@ export interface OrderItem {
   productId: number;
   quantity: number;
   price: number;
+  sourceProductId?: number | string;
+  name?: string;
+  brand?: string;
+  image?: string;
 }
 
 export interface CreateOrderData {
@@ -24,6 +28,7 @@ export interface CreateOrderData {
 
 export interface Order {
   id: number;
+  orderNumber: number;
   userId: number;
   totalAmount: number;
   paymentStatus: string;
@@ -42,6 +47,10 @@ export interface Order {
     id: number;
     orderId: number;
     productId: number;
+    sourceProductRef?: string | null;
+    displayName?: string | null;
+    displayBrand?: string | null;
+    displayImage?: string | null;
     quantity: number;
     price: number;
     product: {

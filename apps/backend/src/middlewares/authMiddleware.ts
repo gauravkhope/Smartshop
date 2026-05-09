@@ -1,6 +1,32 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 
+const extractToken = (req: Request): string | null => {
+  const authHeader = req.headers["authorization"];
+  const fallbackHeader = req.headers["x-access-token"];
+
+  const rawHeader = Array.isArray(authHeader)
+    ? authHeader[0]
+    : authHeader || (Array.isArray(fallbackHeader) ? fallbackHeader[0] : fallbackHeader);
+
+  if (!rawHeader || typeof rawHeader !== "string") {
+    return null;
+  }
+
+  const trimmed = rawHeader.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  // Accept both "Bearer <token>" and raw token strings.
+  const lower = trimmed.toLowerCase();
+  if (lower.startsWith("bearer ")) {
+    return trimmed.slice(7).trim() || null;
+  }
+
+  return trimmed;
+};
+
 // Extend Express Request type to include user
 declare global {
   namespace Express {
@@ -19,11 +45,11 @@ export const authenticateToken = (
   next: NextFunction
 ) => {
   try {
-    // Get token from Authorization header
-    const authHeader = req.headers["authorization"];
-    const token = authHeader && authHeader.split(" ")[1]; // Bearer TOKEN
+    const token = extractToken(req);
+    console.log(`[AUTH DEBUG] Extracted token:`, token ? token.slice(0, 10) + '...' : 'NONE');
 
     if (!token) {
+      console.warn('[AUTH DEBUG] No token found in request headers');
       return res.status(401).json({ message: "Access token required" });
     }
 
@@ -33,6 +59,7 @@ export const authenticateToken = (
       process.env.JWT_SECRET as string,
       (err, decoded: any) => {
         if (err) {
+          console.warn('[AUTH DEBUG] Invalid or expired token:', err.message);
           return res.status(403).json({ message: "Invalid or expired token" });
         }
 
@@ -41,12 +68,12 @@ export const authenticateToken = (
           id: Number(decoded.id),
           email: decoded.email,
         };
-
+        console.log(`[AUTH DEBUG] Authenticated user:`, req.user);
         next();
       }
     );
   } catch (error) {
-    console.error("Auth middleware error:", error);
+    console.error("[AUTH DEBUG] Auth middleware error:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -58,8 +85,7 @@ export const optionalAuth = (
   next: NextFunction
 ) => {
   try {
-    const authHeader = req.headers["authorization"];
-    const token = authHeader && authHeader.split(" ")[1];
+    const token = extractToken(req);
 
     if (!token) {
       return next(); // Continue without user

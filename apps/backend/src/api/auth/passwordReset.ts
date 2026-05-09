@@ -2,12 +2,20 @@ import { Request, Response } from "express";
 import prisma from "../../lib/prisma";
 import bcrypt from "bcryptjs";
 import { sendPasswordResetCodeEmail } from "../../services/emailService";
+import {
+  storePasswordResetCode,
+  getPasswordResetData,
+  verifyPasswordResetCode,
+  markPasswordResetVerified,
+  deletePasswordResetCode,
+} from "../../lib/redis";
 
-// Generate 6-digit verification code
-function generateVerificationCode(): string {
+// Generate 6-digit code
+function generateCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
+// Find user
 async function findUserByEmail(email: string) {
   return prisma.user.findFirst({
     where: {
@@ -19,7 +27,9 @@ async function findUserByEmail(email: string) {
   });
 }
 
-// Request password reset - Send verification code
+//
+// ✅ 1. FORGOT PASSWORD (SEND CODE)
+//
 export const forgotPassword = async (req: Request, res: Response) => {
   try {
     const email = String(req.body?.email || "").trim();
@@ -30,189 +40,138 @@ export const forgotPassword = async (req: Request, res: Response) => {
 
     const user = await findUserByEmail(email);
 
-    // Don't reveal if user exists for security
     if (!user) {
-      return res.status(200).json({
-        message: "If an account exists with this email, you will receive a verification code.",
+      return res.status(404).json({
+        message: "This EMail not Registered . Please Register First...",
       });
     }
 
-    // Generate 6-digit verification code
-    const verificationCode = generateVerificationCode();
-    const expiresAt = new Date(Date.now() + 600000); // 10 minutes
+    const code = generateCode();
 
-    // Persist code in database so verification works across restarts/instances.
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        otp: verificationCode,
-        otpExpiry: expiresAt,
-      },
-    });
+    await storePasswordResetCode(email, user.id, code);
 
-    // Send verification code email
     try {
-      await sendPasswordResetCodeEmail(user.email, user.name, verificationCode);
-      console.log(`Verification code sent to ${email}`);
-    } catch (emailError) {
-      console.error("Email sending error:", emailError);
-      return res.status(500).json({ message: "Failed to send verification code. Please check email configuration." });
+      await sendPasswordResetCodeEmail(user.email, user.name, code);
+    } catch (error) {
+      console.error("Email error:", error);
+      return res.status(500).json({ message: "Failed to send code" });
     }
 
     return res.status(200).json({
-      message: "If an account exists with this email, you will receive a verification code.",
+      message: "If an account exists, you will receive a code.",
     });
+
   } catch (error) {
     console.error("Forgot password error:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
 
-// Verify code and reset password
-export const resetPassword = async (req: Request, res: Response) => {
-  try {
-    const { email, code, password } = req.body;
-
-    if (!email || !code || !password) {
-      return res.status(400).json({ message: "Email, verification code, and password are required" });
-    }
-
-    if (password.length < 6) {
-      return res.status(400).json({ message: "Password must be at least 6 characters" });
-    }
-
-    const normalizedEmail = String(email || "").trim();
-    const user = await findUserByEmail(normalizedEmail);
-
-    if (!user || !user.otp || !user.otpExpiry) {
-      return res.status(400).json({ message: "Invalid or expired verification code" });
-    }
-
-    // Check if expired
-    if (new Date() > user.otpExpiry) {
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { otp: null, otpExpiry: null },
-      });
-      return res.status(400).json({ message: "Verification code has expired" });
-    }
-
-    // Verify code
-    if (String(user.otp).trim() !== String(code).trim()) {
-      return res.status(400).json({ message: "Invalid verification code" });
-    }
-
-    // Hash new password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Update user password and clear OTP
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { password: hashedPassword, otp: null, otpExpiry: null },
-    });
-
-    console.log(`Password reset successful for user ID: ${user.id}`);
-
-    return res.status(200).json({
-      message: "Password reset successful. You can now login with your new password.",
-    });
-  } catch (error) {
-    console.error("Reset password error:", error);
-    return res.status(500).json({ message: "Internal server error" });
-  }
-};
-
-// Verify code only (without resetting password)
-export const verifyCode = async (req: Request, res: Response) => {
+//
+// ✅ 2. VERIFY CODE (STEP 2)
+//
+export const verifyResetCode = async (req: Request, res: Response) => {
   try {
     const { email, code } = req.body;
 
-    if (!email || !code) {
-      return res.status(400).json({ message: "Email and code are required" });
-    }
-
     const normalizedEmail = String(email || "").trim();
-    const user = await findUserByEmail(normalizedEmail);
 
-    if (!user || !user.otp || !user.otpExpiry) {
-      return res.status(400).json({ message: "Invalid or expired verification code" });
+    if (!normalizedEmail || !code) {
+      return res.status(400).json({ message: "Email and code required" });
     }
 
-    if (new Date() > user.otpExpiry) {
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { otp: null, otpExpiry: null },
+    const redisData = await getPasswordResetData(normalizedEmail);
+
+    if (!redisData) {
+      return res.status(400).json({
+        message: "Code expired or not found",
       });
-      return res.status(400).json({ message: "Verification code has expired" });
     }
 
-    // Trim and compare as strings
-    const receivedCode = String(code).trim();
-    const storedCode = String(user.otp).trim();
+    const isValid = await verifyPasswordResetCode(normalizedEmail, code);
 
-    if (storedCode !== receivedCode) {
-      return res.status(400).json({ message: "Invalid verification code" });
+    if (!isValid) {
+      return res.status(400).json({
+        message: "Invalid code",
+      });
     }
 
-    return res.status(200).json({ message: "Code verified successfully" });
+    // ✅ Mark verified
+    await markPasswordResetVerified(normalizedEmail);
+
+    return res.status(200).json({
+      message: "Code verified successfully",
+    });
+
   } catch (error) {
     console.error("Verify code error:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
 
-// Reset password with verification code
-export const resetPasswordWithCode = async (req: Request, res: Response) => {
+//
+// ✅ 3. RESET PASSWORD (FINAL STEP)
+//
+export const resetPassword = async (req: Request, res: Response) => {
   try {
-    const { email, code, password } = req.body;
+    const { email, password } = req.body;
 
-    if (!email || !code || !password) {
-      return res.status(400).json({ message: "Email, code, and password are required" });
+    const normalizedEmail = String(email || "").trim();
+
+    if (!normalizedEmail || !password) {
+      return res.status(400).json({
+        message: "Email and password required",
+      });
     }
 
     if (password.length < 8) {
-      return res.status(400).json({ message: "Password must be at least 8 characters" });
-    }
-
-    const normalizedEmail = String(email || "").trim();
-    const user = await findUserByEmail(normalizedEmail);
-
-    if (!user || !user.otp || !user.otpExpiry) {
-      return res.status(400).json({ message: "Invalid or expired verification code" });
-    }
-
-    if (new Date() > user.otpExpiry) {
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { otp: null, otpExpiry: null },
+      return res.status(400).json({
+        message: "Password must be at least 8 characters",
       });
-      return res.status(400).json({ message: "Verification code has expired" });
     }
 
-    // Trim and compare as strings
-    const receivedCode = String(code).trim();
-    const storedCode = String(user.otp).trim();
+    const resetData = await getPasswordResetData(normalizedEmail);
 
-    if (storedCode !== receivedCode) {
-      return res.status(400).json({ message: "Invalid verification code" });
+    if (!resetData) {
+      return res.status(400).json({
+        message: "Reset session expired",
+      });
     }
 
-    // Hash new password
+    if (!resetData.verified) {
+      return res.status(400).json({
+        message: "Please verify code first",
+      });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: resetData.userId },
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "User not found" });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Update user password and clear OTP
     await prisma.user.update({
-      where: { id: user.id },
-      data: { password: hashedPassword, otp: null, otpExpiry: null },
+      where: { id: resetData.userId },
+      data: { password: hashedPassword },
     });
 
-    console.log(`Password reset successful for user ID: ${user.id}`);
+    // ✅ Cleanup
+    await deletePasswordResetCode(normalizedEmail);
 
     return res.status(200).json({
-      message: "Password reset successful. You can now login with your new password.",
+      message: "Password reset successful",
     });
+
   } catch (error) {
-    console.error("Reset password with code error:", error);
+    console.error("Reset password error:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
+// Backward-compatible exports for existing routes/frontend usage.
+export const verifyCode = verifyResetCode;
+export const resetPasswordWithCode = resetPassword;

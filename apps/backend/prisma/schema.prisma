@@ -17,6 +17,7 @@ model User {
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
   orders        Order[]          @relation("UserOrders")
+  returnReplaceRequests ReturnReplaceRequest[]
   Review        Review[]
   loginHistory  LoginHistory[]
   passwordReset PasswordReset[]
@@ -42,6 +43,7 @@ model Product {
 
 model Order {
   id              Int         @id @default(autoincrement())
+  orderNumber     Int         // Per-user order number, starts at 1 for each user
   userId          Int
   totalAmount     Float
   paymentStatus   String      @default("pending")
@@ -58,12 +60,17 @@ model Order {
   updatedAt       DateTime    @updatedAt
   user            User        @relation("UserOrders", fields: [userId], references: [id])
   items           OrderItem[]
+  returnReplaceRequests ReturnReplaceRequest[]
 }
 
 model OrderItem {
   id        Int      @id @default(autoincrement())
   orderId   Int
   productId Int
+  sourceProductRef String?
+  displayName String?
+  displayBrand String?
+  displayImage String?
   quantity  Int
   price     Float
   createdAt DateTime @default(now())
@@ -129,8 +136,26 @@ model Payment {
   @@index([providerId])
 }
 
+
 enum Role {
   ADMIN
   SELLER
   CUSTOMER
+}
+
+model ReturnReplaceRequest {
+  id           Int      @id @default(autoincrement())
+  orderId      Int
+  userId       Int
+  type         String   // 'return' or 'replace'
+  reason       String
+  status       String   @default("pending") // 'pending', 'cancelled', 'completed'
+  requestedAt  DateTime @default(now())
+  cancelledAt  DateTime?
+  completedAt  DateTime?
+  order        Order    @relation(fields: [orderId], references: [id])
+  user         User     @relation(fields: [userId], references: [id])
+
+  @@index([orderId])
+  @@index([userId])
 }

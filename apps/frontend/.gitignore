@@ -36,6 +36,7 @@ yarn-error.log*
 .env.*.local
 .env.production.local
 .env*
+config/backend-urls/deploy.env
 
 # vercel
 .vercel
@@ -43,3 +44,5 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+.vercel

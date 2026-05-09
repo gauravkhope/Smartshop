@@ -3,8 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "env:local": "node scripts/use-backend-env.mjs local",
+    "env:deploy": "node scripts/use-backend-env.mjs deploy",
+    "predev": "node scripts/use-backend-env.mjs local",
     "dev": "next dev",
+    "prebuild": "node scripts/use-backend-env.mjs deploy",
     "build": "next build",
+    "prestart": "node scripts/use-backend-env.mjs deploy",
     "start": "next start",
     "lint": "eslint"
   },

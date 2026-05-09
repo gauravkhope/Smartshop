@@ -103,6 +103,7 @@ export default function WishlistPage() {
           </div>
 
           <button
+           data-testid = "clearwishlistbutton"
             onClick={clearWishlist}
             className="flex items-center gap-2 px-6 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition font-semibold"
           >
@@ -117,7 +118,7 @@ export default function WishlistPage() {
             <div
               key={`wishlist-${item.id}-${index}`}
               className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all hover:scale-105 group relative"
-            >
+             data-testid = "wishlistcard" >
               {/* Remove Icon */}
               <button
                 onClick={() => removeFromWishlist(item.id)}

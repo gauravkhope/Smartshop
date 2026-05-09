@@ -38,6 +38,7 @@ export interface ConfirmPaymentResponse {
   providerId: string;
   status: PaymentStatus;
   message: string;
+  amount?: number;
   errorCode?: string;
   metadata?: Record<string, any>;
 }

@@ -6,11 +6,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const login_1 = __importDefault(require("../api/auth/login"));
 const register_1 = __importDefault(require("../api/auth/register"));
+const verifyOtp_1 = __importDefault(require("../api/auth/verifyOtp"));
 const passwordReset_1 = require("../api/auth/passwordReset");
 const router = (0, express_1.Router)();
 // Authentication routes
 router.post("/login", login_1.default);
 router.post("/register", register_1.default);
+router.post("/verifyOtp", verifyOtp_1.default);
 // Password reset routes (Sprint 2)
 router.post("/forgot-password", passwordReset_1.forgotPassword);
 router.post("/reset-password", passwordReset_1.resetPassword); // Old token-based method

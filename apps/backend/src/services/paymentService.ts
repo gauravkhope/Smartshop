@@ -15,6 +15,144 @@ import {
   PaymentStatusResponse,
 } from '../lib/payments/paymentProvider';
 import { getDefaultProvider } from '../lib/payments/providerRouter';
+import { randomUUID } from 'crypto';
+
+const DEMO_CARD_LAST4_TO_CVV = new Map<string, string>([
+  ['4242', '100'],
+  ['1111', '101'],
+  ['1234', '102'],
+  ['6789', '103'],
+  ['0001', '104'],
+  ['2468', '105'],
+  ['1357', '106'],
+  ['9000', '107'],
+  ['7007', '108'],
+  ['8888', '109'],
+  ['1212', '110'],
+  ['3434', '111'],
+  ['5555', '200'],
+  ['5100', '201'],
+  ['2222', '202'],
+  ['2720', '203'],
+  ['5412', '204'],
+  ['5123', '205'],
+  ['2233', '206'],
+  ['2600', '207'],
+  ['2711', '208'],
+  ['5309', '209'],
+  ['5511', '210'],
+  ['5522', '211'],
+  ['6080', '300'],
+  ['6521', '301'],
+  ['5081', '302'],
+  ['8192', '303'],
+  ['8266', '304'],
+  ['6011', '305'],
+  ['6500', '306'],
+  ['5085', '307'],
+  ['8123', '308'],
+  ['8210', '309'],
+  ['6060', '310'],
+  ['6585', '311'],
+]);
+
+const cardConfirmTokenStore = new Map<string, { providerId: string; createdAt: Date }>();
+const providerCardConfirmTokenStore = new Map<string, string>();
+
+export function validateDemoCardDetails(
+  cardNumber: string,
+  cvv: string,
+  expiryMonth: string,
+  expiryYear: string
+): { success: boolean; message: string; last4?: string } {
+  const cleanCardNumber = (cardNumber || '').replace(/\s/g, '');
+  const cleanCvv = (cvv || '').trim();
+  const last4 = cleanCardNumber.slice(-4);
+
+  if (!cleanCardNumber) {
+    return { success: false, message: 'Card number is required' };
+  }
+
+  if (cleanCardNumber.length !== 16) {
+    return { success: false, message: 'Card number must be 16 digits' };
+  }
+
+  if (!DEMO_CARD_LAST4_TO_CVV.has(last4)) {
+    return { success: false, message: 'Invalid demo card. Use one of the allowed 36 cards.' };
+  }
+
+  const expectedCvv = DEMO_CARD_LAST4_TO_CVV.get(last4);
+  if (!cleanCvv) {
+    return { success: false, message: 'CVV is required' };
+  }
+
+  if (cleanCvv.length !== 3) {
+    return { success: false, message: 'CVV must be 3 digits' };
+  }
+
+  if (expectedCvv && cleanCvv !== expectedCvv) {
+    return { success: false, message: 'CVV does not match this demo card' };
+  }
+
+  if (!expiryMonth || expiryMonth.trim() === '') {
+    return { success: false, message: 'Expiry Month is required' };
+  }
+
+  if (!expiryYear || expiryYear.trim() === '') {
+    return { success: false, message: 'Expiry Year is required' };
+  }
+
+  const month = Number.parseInt(expiryMonth, 10);
+  const yearValue = Number.parseInt(expiryYear, 10);
+  const fullYear = expiryYear.length === 2 ? 2000 + yearValue : yearValue;
+
+  if (Number.isNaN(month) || Number.isNaN(fullYear)) {
+    return { success: false, message: 'Invalid expiry' };
+  }
+
+  if (month < 1 || month > 12) {
+    return { success: false, message: 'Invalid month (01-12)' };
+  }
+
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
+
+  if (fullYear < currentYear || (fullYear === currentYear && month < currentMonth)) {
+    return { success: false, message: 'Card has expired' };
+  }
+
+  return { success: true, message: 'Card details are valid', last4 };
+}
+
+export function issueCardConfirmToken(providerId: string): string {
+  const existingToken = providerCardConfirmTokenStore.get(providerId);
+  if (existingToken) {
+    cardConfirmTokenStore.delete(existingToken);
+  }
+
+  const token = `CardConfirmToken_${randomUUID()}`;
+  cardConfirmTokenStore.set(token, { providerId, createdAt: new Date() });
+  providerCardConfirmTokenStore.set(providerId, token);
+  return token;
+}
+
+export function consumeCardConfirmToken(token: string): string | null {
+  const record = cardConfirmTokenStore.get(token);
+
+  if (!record) {
+    return null;
+  }
+
+  cardConfirmTokenStore.delete(token);
+  providerCardConfirmTokenStore.delete(record.providerId);
+  return record.providerId;
+}
+
+export function peekCardConfirmTokenProviderId(token: string): string | null {
+  const record = cardConfirmTokenStore.get(token);
+  return record?.providerId || null;
+}
 
 /**
  * Create a new payment
@@ -314,7 +452,7 @@ export async function cancelPayment(providerId: string): Promise<ConfirmPaymentR
 /**
  * Refund a payment (demo implementation)
  */
-export async function refundPayment(providerId: string, amount?: number): Promise<ConfirmPaymentResponse> {
+export async function refundPayment(providerId: string): Promise<ConfirmPaymentResponse> {
   const payment = await prisma.payment.findUnique({
     where: { providerId },
   });
@@ -334,7 +472,7 @@ export async function refundPayment(providerId: string, amount?: number): Promis
       status: 'refunded',
       metadata: {
         ...(payment.metadata as any || {}),
-        refundAmount: amount || payment.amount,
+        refundAmount: payment.amount,
         refundedAt: new Date().toISOString(),
       },
     },
@@ -343,6 +481,7 @@ export async function refundPayment(providerId: string, amount?: number): Promis
   return {
     providerId,
     status: 'refunded',
+    amount: payment.amount,
     message: 'Payment refunded successfully',
   };
 }
@@ -375,5 +514,30 @@ export function handleFakeUpiPayment(upiId: string) {
     message: success
       ? "✅ Payment Successful (Demo)"
       : "❌ Payment Failed - Invalid UPI ID",
+  };
+}
+
+/**
+ * Fake Card Payment Validator
+ * --------------------------------------------
+ * Simulates card success/failure for demo/testing.
+ */
+export function handleFakeCardPayment(cardToken: string) {
+  const validCardTokens = new Set([
+    "card_token_demo_4242",
+    "card_token_success",
+    "card_token_4242",
+    "card_token_5555",
+    "card_token_6080",
+  ]);
+
+  const token = (cardToken || "").trim().toLowerCase();
+  const success = validCardTokens.has(token);
+
+  return {
+    status: success ? "success" : "failed",
+    message: success
+      ? "✅ Payment Successful (Demo)"
+      : "❌ Payment Failed - Invalid Card Token",
   };
 }

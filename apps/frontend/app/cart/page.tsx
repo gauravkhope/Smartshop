@@ -1,11 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import { useCart } from "../context/CartContext";
 import Image from "next/image";
 import Link from "next/link";
 import { Trash2, Heart, ShoppingBag, Plus, Minus, ArrowRight } from "lucide-react";
 
 export default function CartPage() {
+  const [notificationItemId, setNotificationItemId] = useState<string | number | null>(null);
   const {
     cart,
     savedForLater,
@@ -18,9 +20,20 @@ export default function CartPage() {
     getCartTotal,
   } = useCart();
 
-  const deliveryCharge = cart.length > 0 ? (getCartTotal() > 500 ? 0 : 40) : 0;
-  const discount = Math.floor(getCartTotal() * 0.05); // 5% discount
-  const finalTotal = getCartTotal() + deliveryCharge - discount;
+  const subtotal = getCartTotal();
+  const totalQuantity = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  const handleDecreaseQuantity = (itemId: string | number, currentQuantity: number) => {
+    if (currentQuantity === 1) {
+      setNotificationItemId(itemId);
+      setTimeout(() => setNotificationItemId(null), 3000);
+      return;
+    }
+    updateQuantity(itemId as number, currentQuantity - 1);
+  };
+  const deliveryCharge = cart.length > 0 ? (subtotal > 500 ? 0 : 99) : 0;
+  const discount = Math.floor(subtotal * 0.05); // 5% discount
+  const finalTotal = subtotal + deliveryCharge - discount;
 
   if (cart.length === 0 && savedForLater.length === 0) {
     return (
@@ -43,7 +56,7 @@ export default function CartPage() {
 
   return (
     <div className="max-w-7xl mx-auto py-8 px-4">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">Shopping Cart ({cart.length})</h1>
+      <h1 data-testid="cart-count-title" className="text-3xl font-bold text-gray-900 mb-8">Shopping Cart ({cart.length})</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Cart Items */}
@@ -66,7 +79,7 @@ export default function CartPage() {
           {cart.map((item, index) => (
             <div
               key={`cart-${item.id}-${index}`}
-              className="bg-white rounded-lg shadow-sm p-6 flex gap-6 hover:shadow-md transition-shadow"
+             data-testid = "cart-productcard" className="bg-white rounded-lg shadow-sm p-6 flex gap-6 hover:shadow-md transition-shadow"
             >
               {/* Product Image */}
               <div className="flex-shrink-0 w-24 h-24 bg-gray-100 rounded-lg overflow-hidden relative">
@@ -110,21 +123,26 @@ export default function CartPage() {
 
                 {/* Actions */}
                 <div className="flex items-center justify-between mt-4">
-                  {/* Quantity Controls */}
-                  <div className="flex items-center gap-3 bg-gray-100 rounded-lg px-3 py-2">
-                    <button
-                      onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                      className="text-gray-600 hover:text-gray-900"
-                    >
-                      <Minus className="w-4 h-4" />
-                    </button>
-                    <span className="w-8 text-center font-medium">{item.quantity}</span>
-                    <button
-                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                      className="text-gray-600 hover:text-gray-900"
-                    >
-                      <Plus className="w-4 h-4" />
-                    </button>
+                  <div>
+                    {/* Quantity Controls */}
+                    <div data-testid="cart-quantity-controls" className="flex items-center gap-3 bg-gray-100 rounded-lg px-3 py-2">
+                      <button
+                        onClick={() => handleDecreaseQuantity(item.id, item.quantity)}
+                        className="text-gray-600 hover:text-gray-900"
+                      >
+                        <Minus className="w-4 h-4" />
+                      </button>
+                      <span className="w-8 text-center font-medium">{item.quantity}</span>
+                      <button
+                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                        className="text-gray-600 hover:text-gray-900"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
+                    {notificationItemId === item.id && (
+                      <p className="text-orange-500 text-sm font-medium mt-2">At least 1 Qty is required.</p>
+                    )}
                   </div>
 
                   {/* Action Buttons */}
@@ -218,13 +236,13 @@ export default function CartPage() {
             <div className="bg-white rounded-lg shadow-lg p-6 sticky top-4">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Order Summary</h2>
 
-              <div className="space-y-3 text-gray-700">
-                <div className="flex justify-between">
-                  <span>Subtotal ({cart.length} items)</span>
-                  <span className="font-semibold">₹{getCartTotal().toLocaleString()}</span>
+              <div data-testid="cart-order-summary" className="space-y-3 text-gray-700">
+                <div data-testid="cart-subtotal" className="flex justify-between">
+                  <span>Subtotal ({cart.length} items) × Qty ({totalQuantity})</span>
+                  <span className="font-semibold">₹{subtotal.toLocaleString()}</span>
                 </div>
 
-                <div className="flex justify-between">
+                <div data-testid="cart-delivery-charges" className="flex justify-between">
                   <span>Delivery Charges</span>
                   <span className="font-semibold">
                     {deliveryCharge === 0 ? (
@@ -236,13 +254,12 @@ export default function CartPage() {
                 </div>
 
                 {discount > 0 && (
-                  <div className="flex justify-between text-green-600">
+                  <div data-testid="cart-discount" className="flex justify-between text-green-600">
                     <span>Discount (5%)</span>
                     <span className="font-semibold">-₹{discount.toLocaleString()}</span>
                   </div>
                 )}
-
-                <div className="border-t pt-3 flex justify-between text-xl font-bold">
+                <div data-testid="cart-total" className="border-t pt-3 flex justify-between text-xl font-bold">
                   <span>Total</span>
                   <span className="text-orange-600">₹{finalTotal.toLocaleString()}</span>
                 </div>

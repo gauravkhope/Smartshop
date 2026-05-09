@@ -1,11 +1,14 @@
+import returnReplaceRoutes from "./routes/returnReplaceRoutes";
 import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import productRoutes from "./routes/productroutes";
 import authRoutes from "./routes/authRoutes";
 import userRoutes from "./routes/userRoutes";
+import { authenticateToken } from "./middlewares/authMiddleware";
 import dotenv from "dotenv";
 import { updateUserPassword } from '../lib/userService';
 import path from "path";
+import { errorHandler, notFoundHandler } from "./middlewares/errorHandler";
 
 console.log("✅ Loading order routes...");
  import orderRoutes from "./routes/orderRoutes";
@@ -15,9 +18,10 @@ console.log("✅ Loading payment routes...");
 import paymentRoutes from "./routes/paymentRoutes";
 console.log("✅ Payment routes loaded successfully!");
 
-dotenv.config({ path: __dirname + "/../.env" });
-
-dotenv.config();
+dotenv.config({
+  path: path.resolve(__dirname, "../.env"),
+  override: true,
+});
 
 // ====================================
 // CORS Configuration with Environment Support
@@ -59,7 +63,8 @@ app.use(
     maxAge: 86400, // 24 hours
   })
 );
-app.use(express.json());
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
 // Log CORS configuration
 if (process.env.NODE_ENV !== "production") {
@@ -89,11 +94,13 @@ app.get("/api/test", (req: Request, res: Response) => {
 app.use("/api/products", productRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
+app.use("/api/orders", returnReplaceRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/payments", paymentRoutes);
 
 
 import { verifyUserPassword } from '../lib/userService';
+import { verifyEmailTransporter } from './services/emailService';
 app.post('/api/verify-password', async (req: Request, res: Response) => {
   const { userId, password } = req.body;
   if (!userId || !password) {
@@ -112,24 +119,100 @@ app.post('/api/verify-password', async (req: Request, res: Response) => {
 });
 
 // Password update route
-app.post('/api/update-password', async (req: Request, res: Response) => {
+app.post('/api/update-password', authenticateToken, async (req: Request, res: Response) => {
   const { userId, currentPassword, newPassword } = req.body;
-  if (!userId || !currentPassword || !newPassword) {
-    return res.status(400).json({ error: 'Missing required fields' });
+
+  if (!req.user) {
+    return res.status(401).json({ success: false, error: 'Unauthorized', message: 'Unauthorized' });
   }
+
+  if (!currentPassword) {
+    return res.status(400).json({
+      success: false,
+      error: 'Current password is required',
+      message: 'Current password is required',
+    });
+  }
+
+  if (!newPassword) {
+    return res.status(400).json({
+      success: false,
+      error: 'New password is required',
+      message: 'New password is required',
+    });
+  }
+
+  if (typeof currentPassword !== 'string' || typeof newPassword !== 'string') {
+    return res.status(400).json({
+      success: false,
+      error: 'Password fields must be strings',
+      message: 'Password fields must be strings',
+    });
+  }
+
+  if (newPassword.length < 8) {
+    return res.status(400).json({
+      success: false,
+      error: 'New password must be at least 8 characters',
+      message: 'New password must be at least 8 characters',
+    });
+  }
+
+  if (currentPassword === newPassword) {
+    return res.status(400).json({
+      success: false,
+      error: 'New password must be different from current password',
+      message: 'New password must be different from current password',
+    });
+  }
+
+  const authenticatedUserId = req.user.id;
+  const authenticatedUserEmail = req.user.email;
+
+  // Optional body userId must match authenticated identity if provided.
+  if (userId && Number(userId) !== authenticatedUserId) {
+    return res.status(403).json({
+      success: false,
+      error: 'Forbidden: cannot update another user password',
+      message: 'Forbidden: cannot update another user password',
+    });
+  }
+
   try {
-    const result = await updateUserPassword(userId, currentPassword, newPassword);
+    const result = await updateUserPassword(authenticatedUserEmail, currentPassword, newPassword);
     if (result.success) {
-      return res.status(200).json({ success: true });
+      return res.status(200).json({ success: true, message: 'Password updated successfully' });
     } else {
-      // Return 401 for wrong password or user not found
-      return res.status(401).json({ success: false, error: result.error || 'You have entered wrong Password' });
+      if (result.error === 'Current password is incorrect') {
+        return res.status(401).json({
+          success: false,
+          error: 'Current password is incorrect',
+          message: 'Current password is incorrect',
+        });
+      }
+
+      if (result.error === 'User not found') {
+        return res.status(404).json({
+          success: false,
+          error: 'User not found',
+          message: 'User not found',
+        });
+      }
+
+      return res.status(400).json({
+        success: false,
+        error: result.error || 'Failed to update password',
+        message: result.error || 'Failed to update password',
+      });
     }
   } catch (err) {
     console.error('Password update error:', err);
-    return res.status(500).json({ error: 'Server error' });
+    return res.status(500).json({ success: false, error: 'Server error', message: 'Server error' });
   }
 });
+
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 // ====================================
 // ENVIRONMENT VALIDATION
@@ -197,8 +280,21 @@ async function runMigrations(): Promise<void> {
 const PORT = process.env.PORT || 5000;
 
 // Run migrations before starting server (only in production)
-runMigrations()
-  .then(() => {
+;(async () => {
+  try {
+    await runMigrations();
+
+    try {
+      await verifyEmailTransporter();
+    } catch (err) {
+      if (process.env.NODE_ENV === "production") {
+        console.error("❌ Email transporter verification failed in production. Please check SMTP credentials and environment variables.");
+        process.exit(1);
+      } else {
+        console.warn("⚠️ Email transporter verification failed (development). Emails may fall back to Ethereal.", err);
+      }
+    }
+
     const server = app.listen(PORT, () => {
       console.log(`📝 Server listening on port ${PORT} and ready to accept requests`);
     });
@@ -206,8 +302,8 @@ runMigrations()
     server.on("error", (error: unknown) => {
       console.error("❌ Server error:", error);
     });
-  })
-  .catch((error) => {
+  } catch (error) {
     console.error("❌ Failed to start server:", error);
     process.exit(1);
-  });
+  }
+})();

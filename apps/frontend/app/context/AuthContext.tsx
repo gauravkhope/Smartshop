@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { API_BASE_URL } from "@/lib/config";
 
 interface User {
   id: number;
@@ -26,6 +27,57 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const isTokenExpired = (jwtToken: string): boolean => {
+  try {
+    const parts = jwtToken.split(".");
+    if (parts.length !== 3) return true;
+
+    const payload = JSON.parse(atob(parts[1]));
+    if (!payload?.exp) return true;
+
+    return Date.now() >= Number(payload.exp) * 1000;
+  } catch {
+    return true;
+  }
+};
+
+const readStoredAuth = (): { token: string; user: User } | null => {
+  const candidates: Array<{ token: string | null; user: string | null; storage: Storage }> = [
+    {
+      token: sessionStorage.getItem("token"),
+      user: sessionStorage.getItem("user"),
+      storage: sessionStorage,
+    },
+    {
+      token: localStorage.getItem("token"),
+      user: localStorage.getItem("user"),
+      storage: localStorage,
+    },
+  ];
+
+  for (const candidate of candidates) {
+    if (!candidate.token || !candidate.user) continue;
+
+    if (isTokenExpired(candidate.token)) {
+      candidate.storage.removeItem("token");
+      candidate.storage.removeItem("user");
+      continue;
+    }
+
+    try {
+      return {
+        token: candidate.token,
+        user: JSON.parse(candidate.user) as User,
+      };
+    } catch {
+      candidate.storage.removeItem("token");
+      candidate.storage.removeItem("user");
+    }
+  }
+
+  return null;
+};
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -34,12 +86,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // ✅ Load user from localStorage/sessionStorage
   useEffect(() => {
-    const storedToken = localStorage.getItem("token") || sessionStorage.getItem("token");
-    const storedUser = localStorage.getItem("user") || sessionStorage.getItem("user");
+    const storedAuth = readStoredAuth();
 
-    if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
+    if (storedAuth) {
+      setToken(storedAuth.token);
+      setUser(storedAuth.user);
     }
     setIsLoading(false);
   }, []);
@@ -48,15 +99,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const refreshUser = async () => {
     try {
       if (!token) return;
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/profile`, {
+      const response = await fetch(`${API_BASE_URL}/api/user/profile`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       const data = await response.json();
       if (response.ok && data.user) {
         setUser(data.user);
-        const storage = localStorage.getItem("token") ? localStorage : sessionStorage;
-        storage.setItem("user", JSON.stringify(data.user));
+        if (sessionStorage.getItem("token") === token) {
+          sessionStorage.setItem("user", JSON.stringify(data.user));
+        } else {
+          localStorage.setItem("user", JSON.stringify(data.user));
+        }
       }
     } catch (err) {
       console.error("Failed to refresh user profile:", err);
@@ -66,7 +120,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // ✅ Login function - now includes avatar persistence
   const login = async (email: string, password: string, rememberMe = false) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
+      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -76,17 +130,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       const data = await response.json();
       if (!response.ok) {
-        const errorMsg =
+        const rawMessage =
           data && typeof data.message === "string"
             ? data.message
             : data && data.error
             ? data.error
             : "Login failed";
+
+        let errorMsg = rawMessage;
+
+        if (rawMessage.includes("Too many failed attempts")) {
+          errorMsg = "Too many failed attempts.\nTry again after 10 minutes.";
+        } else if (
+          data &&
+          typeof data.remainingAttempts === "number" &&
+          data.remainingAttempts >= 0
+        ) {
+          errorMsg = `Invalid email or password\nRemaining attempts: ${data.remainingAttempts}`;
+        }
+
         toast.error(errorMsg);
         return;
       }
 
       const storage = rememberMe ? localStorage : sessionStorage;
+      const otherStorage = rememberMe ? sessionStorage : localStorage;
+
+      // Keep a single source of truth so interceptors never pick stale tokens.
+      otherStorage.removeItem("token");
+      otherStorage.removeItem("user");
       storage.setItem("token", data.token);
       storage.setItem("user", JSON.stringify(data.user));
 
@@ -104,7 +176,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Register function
   const register = async (name: string, email: string, password: string) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`, {
+      const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -142,7 +214,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // ✅ Update user (including avatar)
 const updateUser = (userData: Partial<User>) => {
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  const API_URL = API_BASE_URL;
 
   let finalAvatar = userData.avatar ?? user?.avatar;
 
@@ -172,8 +244,11 @@ const updateUser = (userData: Partial<User>) => {
 
   setUser(updatedUser);
 
-  const storage = localStorage.getItem("token") ? localStorage : sessionStorage;
-  storage.setItem("user", JSON.stringify(updatedUser));
+  if (sessionStorage.getItem("token") === token) {
+    sessionStorage.setItem("user", JSON.stringify(updatedUser));
+  } else {
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+  }
 };
 
 

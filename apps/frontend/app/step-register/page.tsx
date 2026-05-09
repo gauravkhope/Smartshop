@@ -29,9 +29,9 @@ export default function StepRegisterPage() {
     setLoading(true);
     setError("");
     try {
-      await axios.post("/api/auth/register", { name, email });
+      const res = await axios.post("/auth/register", { name, email });
       setStep(2); // go to OTP step
-      setSuccess("OTP sent to your email");
+      setSuccess(res.data?.message || "Register OTP sent on SmartShop.");
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to send OTP");
     } finally {
@@ -49,11 +49,18 @@ export default function StepRegisterPage() {
     setLoading(true);
     setError("");
     try {
-      await axios.post("/api/auth/verifyOtp", { email, otp });
+      await axios.post("/auth/verifyOtp", { email, otp });
       setStep(3); // go to password step
       setSuccess("Email verified! Set your password.");
     } catch (err: any) {
-      setError(err.response?.data?.message || "OTP verification failed");
+      const message = err.response?.data?.message || "OTP verification failed";
+      const remainingAttempts = err.response?.data?.remainingAttempts;
+
+      if (typeof remainingAttempts === "number") {
+        setError(`${message}. Remaining attempts: ${remainingAttempts}`);
+      } else {
+        setError(message);
+      }
     } finally {
       setLoading(false);
     }
@@ -73,7 +80,7 @@ export default function StepRegisterPage() {
     setLoading(true);
     setError("");
     try {
-      await axios.post("/api/auth/register", { name, email, password });
+      await axios.post("/auth/register", { name, email, password });
       setSuccess("Account created successfully!");
       setTimeout(() => router.push("/login"), 1500);
     } catch (err: any) {
@@ -128,6 +135,21 @@ export default function StepRegisterPage() {
       {/* STEP 2 */}
       {step === 2 && (
         <form onSubmit={handleOtpSubmit} className="space-y-6">
+          {/* Gmail notification banner */}
+          <div className="flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
+            <div className="relative w-10 h-10 shrink-0">
+              <span className="absolute inset-0 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 shadow-[0_10px_18px_rgba(14,116,144,0.35)] rotate-6" />
+              <span className="absolute inset-[2px] rounded-[10px] bg-white/85 border border-white/70" />
+              <span className="absolute inset-0 grid place-items-center text-xl drop-shadow-[0_3px_2px_rgba(0,0,0,0.25)] -rotate-3">📧</span>
+            </div>
+            <div>
+              <p className="font-semibold text-blue-800 text-sm">Check Your Gmail</p>
+              <p className="text-gray-500 text-xs mt-0.5">
+                OTP sent to <span className="font-medium text-blue-700">{email}</span>
+              </p>
+            </div>
+          </div>
+
           <div>
             <label className="block mb-1 font-medium">Enter OTP</label>
             <input

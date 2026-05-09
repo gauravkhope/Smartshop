@@ -3,7 +3,6 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  Menu,
   X,
   Search,
   ShoppingCart,
@@ -31,7 +30,6 @@ export default function Navbar() {
   const cartCount = cart.reduce((count, item) => count + item.quantity, 0);
   const wishlistCount = wishlist.length;
   const [menuOpen, setMenuOpen] = useState(false);
-  const [profileOpen, setProfileOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -43,6 +41,7 @@ export default function Navbar() {
   const searchRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const suppressNextSuggestionsRef = useRef(false);
 
   const mobileSearchPlaceholders = [
     "Search mobiles...",
@@ -51,17 +50,87 @@ export default function Navbar() {
     "Search electronics...",
   ];
 
+  const getProductSearchTerms = (product: any): string[] => {
+    const categoryValue =
+      typeof product?.category === "string"
+        ? product.category
+        : product?.category?.name;
+    const subCategoryValue =
+      typeof product?.subCategory === "string"
+        ? product.subCategory
+        : product?.subCategory?.name;
+
+    return [
+      product?.name,
+      product?.brand,
+      product?.mainCategory,
+      categoryValue,
+      subCategoryValue,
+    ].filter((value): value is string => typeof value === "string" && value.trim().length > 0);
+  };
+
   // Fetch products for autocomplete
   useEffect(() => {
     async function fetchProducts() {
       try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/products`
-        );
-        const data = await res.json();
-        setAllProducts(Array.isArray(data) ? data : data.products || []);
+        const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL;
+        if (!apiBaseUrl) {
+          console.error("NEXT_PUBLIC_API_URL is not defined");
+          setAllProducts([]);
+          return;
+        }
+
+        const pageSize = 100;
+        let page = 1;
+        let hasMore = true;
+        const mergedProducts: any[] = [];
+
+        while (hasMore) {
+          const res = await fetch(
+            `${apiBaseUrl}/api/products?page=${page}&limit=${pageSize}`
+          );
+
+          if (!res.ok) {
+            throw new Error(`Failed to fetch products page ${page}: ${res.status}`);
+          }
+
+          const data = await res.json();
+          const batch = Array.isArray(data)
+            ? data
+            : Array.isArray(data?.products)
+              ? data.products
+              : Array.isArray(data?.data)
+                ? data.data
+                : [];
+
+          if (batch.length === 0) {
+            break;
+          }
+
+          mergedProducts.push(...batch);
+
+          if (Array.isArray(data)) {
+            hasMore = false;
+          } else if (typeof data?.hasMore === "boolean") {
+            hasMore = data.hasMore;
+          } else if (
+            Number.isInteger(data?.totalPages) &&
+            Number(data.totalPages) > 0
+          ) {
+            hasMore = page < Number(data.totalPages);
+          } else if (typeof data?.total === "number") {
+            hasMore = mergedProducts.length < data.total;
+          } else {
+            hasMore = batch.length === pageSize;
+          }
+
+          page += 1;
+        }
+
+        setAllProducts(mergedProducts);
       } catch (error) {
         console.error("Failed to fetch products:", error);
+        setAllProducts([]);
       }
     }
     fetchProducts();
@@ -69,33 +138,21 @@ export default function Navbar() {
 
   // Generate suggestions based on search query
   useEffect(() => {
+    if (suppressNextSuggestionsRef.current) {
+      suppressNextSuggestionsRef.current = false;
+      return;
+    }
+
     if (searchQuery.trim().length > 0) {
       const query = searchQuery.toLowerCase();
       const productSuggestions = new Set<string>();
 
       allProducts.forEach((product) => {
-        // Add product name if it matches
-        if (product.name.toLowerCase().includes(query)) {
-          productSuggestions.add(product.name);
-        }
-        // Add brand if it matches
-        if (product.brand && product.brand.toLowerCase().includes(query)) {
-          productSuggestions.add(product.brand);
-        }
-        // Add category if it matches
-        if (
-          product.category?.name &&
-          product.category.name.toLowerCase().includes(query)
-        ) {
-          productSuggestions.add(product.category.name);
-        }
-        // Add subcategory if it matches
-        if (
-          product.subCategory?.name &&
-          product.subCategory.name.toLowerCase().includes(query)
-        ) {
-          productSuggestions.add(product.subCategory.name);
-        }
+        getProductSearchTerms(product).forEach((term) => {
+          if (term.toLowerCase().includes(query)) {
+            productSuggestions.add(term);
+          }
+        });
       });
 
       setSuggestions(Array.from(productSuggestions).slice(0, 8)); // Limit to 8 suggestions
@@ -106,42 +163,40 @@ export default function Navbar() {
     }
   }, [searchQuery, allProducts]);
 
-  // Close floating menu when clicking anywhere outside of menu and hamburger button
+  // Close floating menu on any interaction outside the menu and hamburger button.
   useEffect(() => {
     if (!menuOpen) return;
 
-    const handleOutsideClick = (event: MouseEvent | TouchEvent) => {
-      const target = event.target as Node;
-      const clickedInsideMenu = menuRef.current?.contains(target);
-      const clickedHamburger = menuButtonRef.current?.contains(target);
+    const handleOutsideInteraction = (event: Event) => {
+      const target = event.target as Node | null;
+      const clickedInsideMenu = !!(target && menuRef.current?.contains(target));
+      const clickedHamburger = !!(target && menuButtonRef.current?.contains(target));
 
       if (!clickedInsideMenu && !clickedHamburger) {
         setMenuOpen(false);
+        setProfileDropdownOpen(false);
       }
     };
 
-    document.addEventListener("mousedown", handleOutsideClick);
-    document.addEventListener("touchstart", handleOutsideClick);
-
-    const handleOutsideScroll = (event: Event) => {
-      const target = event.target as Node | null;
-      const scrolledInsideMenu = target && menuRef.current?.contains(target);
-      const scrolledHamburger = target && menuButtonRef.current?.contains(target);
-
-      if (!scrolledInsideMenu && !scrolledHamburger) {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
         setMenuOpen(false);
+        setProfileDropdownOpen(false);
       }
     };
 
-    // Capture scroll/touchmove early so mobile outside scrolling also closes the menu.
-    window.addEventListener("scroll", handleOutsideScroll, true);
-    document.addEventListener("touchmove", handleOutsideScroll, true);
+    document.addEventListener("mousedown", handleOutsideInteraction);
+    document.addEventListener("touchstart", handleOutsideInteraction);
+    document.addEventListener("focusin", handleOutsideInteraction);
+    document.addEventListener("wheel", handleOutsideInteraction, { passive: true });
+    document.addEventListener("keydown", handleEscape);
 
     return () => {
-      document.removeEventListener("mousedown", handleOutsideClick);
-      document.removeEventListener("touchstart", handleOutsideClick);
-      window.removeEventListener("scroll", handleOutsideScroll, true);
-      document.removeEventListener("touchmove", handleOutsideScroll, true);
+      document.removeEventListener("mousedown", handleOutsideInteraction);
+      document.removeEventListener("touchstart", handleOutsideInteraction);
+      document.removeEventListener("focusin", handleOutsideInteraction);
+      document.removeEventListener("wheel", handleOutsideInteraction);
+      document.removeEventListener("keydown", handleEscape);
     };
   }, [menuOpen]);
 
@@ -200,10 +255,47 @@ export default function Navbar() {
   };
 
   const handleSuggestionClick = (suggestion: string) => {
+    suppressNextSuggestionsRef.current = true;
     setSearchQuery(suggestion);
+    setSuggestions([]);
     setShowSuggestions(false);
     router.push(`/products?search=${encodeURIComponent(suggestion)}`);
   };
+
+  const profileName = user?.name ? user.name.toUpperCase() : "GUEST";
+  const profileNameLength = profileName.length;
+  const getProfileNameFontSize = (length: number) => {
+    if (length <= 10) return "1rem";
+    if (length <= 14) return "0.92rem";
+    if (length <= 18) return "0.84rem";
+    if (length <= 24) return "0.76rem";
+    if (length <= 30) return "0.68rem";
+    return "0.52rem";
+  };
+
+  const navigateFromMenu = (path: string) => {
+    setMenuOpen(false);
+    setProfileDropdownOpen(false);
+    router.push(path);
+  };
+
+  const handleMenuLogout = () => {
+    setMenuOpen(false);
+    setProfileDropdownOpen(false);
+    logout();
+  };
+
+  useEffect(() => {
+    if (!menuOpen) {
+      setProfileDropdownOpen(false);
+    }
+  }, [menuOpen]);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setProfileDropdownOpen(false);
+    }
+  }, [isAuthenticated]);
 
   return (
     <>
@@ -315,7 +407,7 @@ export default function Navbar() {
                   </div>
                   {suggestions.map((suggestion, index) => (
                     <div
-                      key={index}
+                    key={index}
                       onClick={() => handleSuggestionClick(suggestion)}
                       className="mobile-suggestion-item px-3 py-2.5 hover:bg-amber-50/65 active:bg-orange-100/75 cursor-pointer flex items-center gap-2 border-b border-amber-100/70 last:border-b-0 transition-colors text-xs"
                       style={{ animationDelay: `${index * 80}ms` }}
@@ -354,9 +446,9 @@ export default function Navbar() {
           </h1>
         </div>
 
-        {/* CENTER + Profile */}
-        <div className="flex-1 flex flex-col md:flex-row md:justify-center md:items-center">
-          <div ref={searchRef} className="flex md:relative w-full max-w-xs sm:max-w-sm md:max-w-xl lg:max-w-3xl">
+        {/* CENTER */}
+        <div className="flex-1 min-w-0 flex flex-col md:flex-row md:justify-center md:items-center">
+          <div ref={searchRef} className="flex md:relative min-w-0 w-full max-w-xs sm:max-w-sm md:max-w-xl lg:max-w-3xl">
             <form
               onSubmit={handleSearch}
               onClick={() => {
@@ -421,36 +513,40 @@ export default function Navbar() {
               </div>
             )}
           </div>
-          {/* Profile picture and name to the right of searchbar */}
+        </div>
+
+        {/* RIGHT */}
+        <div className="flex items-center gap-2 sm:gap-3 md:gap-4 lg:gap-6 flex-shrink-0 min-w-0">
           {isAuthenticated && user && (
-            <div className="hidden sm:flex items-center mt-3 md:mt-0 md:ml-6">
+            <div className="hidden md:flex items-center min-w-0 max-w-[8rem] lg:max-w-[12rem] xl:max-w-[14rem]">
               <img
-              data-testid="navbar-profile-avatar"
+                data-testid="navbar-profile-avatar"
                 src={
                   user?.avatar
-                    ? user.avatar.startsWith("/images") // frontend avatars (avatar1.png etc.)
+                    ? user.avatar.startsWith("/images")
                       ? user.avatar
-                      : user.avatar.startsWith("http") // full URL
+                      : user.avatar.startsWith("http")
                       ? user.avatar
-                      : `${process.env.NEXT_PUBLIC_API_URL}${user.avatar}` // backend uploads
+                      : `${process.env.NEXT_PUBLIC_API_URL}${user.avatar}`
                     : "/images/default-avatar.png"
                 }
                 alt="Profile"
-                className="w-10 sm:w-12 md:w-14 lg:w-16 h-10 sm:h-12 md:h-14 lg:h-16 rounded-full object-cover border-2 border-indigo-500 transition-transform duration-300 hover:scale-105"
+                className="w-12 h-12 lg:w-14 lg:h-14 rounded-full object-cover border-2 border-indigo-500"
                 onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
                   e.currentTarget.src = "/images/default-avatar.png";
                 }}
               />
 
-              <span data-testid="navbar-profile-name" className="hidden md:inline ml-2 md:ml-3 font-semibold text-gray-800 dark:text-gray-100 text-sm md:text-base">
-                {user?.name ? user.name.toUpperCase() : "GUEST"}
+              <span
+                data-testid="navbar-profile-name"
+                title={profileName}
+                className="ml-2 font-semibold text-gray-800 dark:text-gray-100 leading-none whitespace-nowrap"
+                style={{ fontSize: getProfileNameFontSize(profileNameLength) }}
+              >
+                {profileName}
               </span>
             </div>
           )}
-        </div>
-
-        {/* RIGHT */}
-        <div className="flex items-center gap-2 sm:gap-3 md:gap-6">
           {/* Wishlist with Count */}
           <Link href="/wishlist" data-testid="navbar-wishlist" className="relative group">
             <div className="relative p-2 rounded-xl bg-gradient-to-br from-pink-50 to-red-50 dark:from-pink-900/20 dark:to-red-900/20 hover:from-pink-100 hover:to-red-100 dark:hover:from-pink-800/30 dark:hover:to-red-800/30 transition-all duration-300 hover:scale-110 hover:shadow-lg">
@@ -488,7 +584,7 @@ export default function Navbar() {
           ref={menuButtonRef}
           data-testid="navbar-hamburger"
             className="relative p-2.5 w-11 h-11 flex flex-col items-center justify-center gap-1.5 rounded-xl bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 dark:from-orange-900/20 dark:via-amber-900/20 dark:to-yellow-900/20 hover:from-orange-100 hover:via-amber-100 hover:to-yellow-100 dark:hover:from-orange-800/30 dark:hover:via-amber-800/30 dark:hover:to-yellow-800/30 transition-all duration-300 hover:scale-110 hover:shadow-lg border border-orange-200/50 dark:border-orange-700/50"
-            onClick={() => setMenuOpen(!menuOpen)}
+            onClick={() => setMenuOpen((open) => !open)}
 
           >
             <span 
@@ -522,9 +618,9 @@ export default function Navbar() {
       {menuOpen && (
         <>
           {/* Floating glassmorphic menu - less transparent, icons visible */}
-            <div ref={menuRef} data-testid="side-drawer" className="fixed top-24 right-8 z-[60] w-72 p-0">
+            <div ref={menuRef} data-testid="side-drawer" className="fixed top-20 right-2 sm:right-8 z-[60] w-[calc(100vw-1rem)] max-w-72 max-h-[calc(100vh-6rem)] p-0">
             <div
-              className="relative rounded-2xl backdrop-blur-xl bg-white/70 dark:bg-gray-800/70 border border-gray-200 dark:border-gray-700 shadow-2xl overflow-hidden"
+              className="relative rounded-2xl backdrop-blur-xl bg-white/70 dark:bg-gray-800/70 border border-gray-200 dark:border-gray-700 shadow-2xl overflow-hidden max-h-[calc(100vh-6rem)]"
               style={{
                 boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.37)",
                 border: "1px solid rgba(255,255,255,0.18)",
@@ -537,12 +633,12 @@ export default function Navbar() {
               >
                 <X className="w-5 h-5" />
               </button>
-              <ul className="flex flex-col gap-2 py-6 px-6">
+              <ul className="flex flex-col gap-2 py-6 px-6 overflow-y-auto max-h-[calc(100vh-8rem)]">
                 {/* HOME */}
                 <li
                 data-testid="drawer-home"
                   className="flex items-center gap-3 cursor-pointer group transform transition-transform duration-300 hover:scale-110 hover:rotate-[1deg]"
-                  onClick={() => router.push("/")}
+                  onClick={() => navigateFromMenu("/")}
                 >
                   <div className="flex items-center justify-center w-9 h-9 rounded-full bg-gradient-to-r from-pink-500 via-orange-400 to-red-500 shadow-md group-hover:shadow-lg group-hover:scale-110 transition">
                     <Home className="w-5 h-5 text-white" />
@@ -574,9 +670,7 @@ export default function Navbar() {
                         <li
                         data-testid="drawer-view-profile"
                           className="flex items-center gap-2 cursor-pointer hover:scale-105 transition-transform"
-                          onClick={() =>
-                            router.push("/my-profile/view-profile")
-                          }
+                          onClick={() => navigateFromMenu("/my-profile/view-profile")}
                         >
                           <User className="w-5 h-5 text-indigo-500" />
                           <span className="text-gray-800 dark:text-gray-100">
@@ -586,7 +680,7 @@ export default function Navbar() {
                         <li
                           data-testid="drawer-orders"
                           className="flex items-center gap-2 cursor-pointer hover:scale-105 transition-transform"
-                          onClick={() => router.push("/orders")}
+                          onClick={() => navigateFromMenu("/orders")}
                         >
                           <ClipboardList className="w-5 h-5 text-orange-500" />
                           <span className="text-gray-800 dark:text-gray-100">
@@ -596,7 +690,7 @@ export default function Navbar() {
                         <li
                         data-testid="drawer-notifications"
                           className="flex items-center gap-2 cursor-pointer hover:scale-105 transition-transform"
-                          onClick={() => router.push("/notifications")}
+                          onClick={() => navigateFromMenu("/notifications")}
                         >
                           <Bell className="w-5 h-5 text-pink-500" />
                           <span className="text-gray-800 dark:text-gray-100">
@@ -606,7 +700,7 @@ export default function Navbar() {
                         <li
                         data-testid="drawer-coupons"
                           className="flex items-center gap-2 cursor-pointer hover:scale-105 transition-transform"
-                          onClick={() => router.push("/coupons")}
+                          onClick={() => navigateFromMenu("/coupons")}
                         >
                           <Gift className="w-5 h-5 text-green-500" />
                           <span className="text-gray-800 dark:text-gray-100">
@@ -616,7 +710,7 @@ export default function Navbar() {
                         <li
                         data-testid="drawer-logout"
                           className="flex items-center gap-2 cursor-pointer hover:scale-105 transition-transform"
-                          onClick={logout}
+                          onClick={handleMenuLogout}
                         >
                           <LogOut className="w-5 h-5 text-red-500" />
                           <span className="text-gray-800 dark:text-gray-100">
@@ -629,7 +723,7 @@ export default function Navbar() {
                 ) : (
                   <li
                     className="flex items-center gap-3 cursor-pointer group transform transition-transform duration-300 hover:scale-110 hover:rotate-[1deg]"
-                    onClick={() => router.push("/login")}
+                    onClick={() => navigateFromMenu("/login")}
                   >
                     <div className="flex items-center justify-center w-9 h-9 rounded-full bg-gradient-to-r from-indigo-500 via-pink-500 to-orange-500 shadow-md group-hover:shadow-lg group-hover:scale-110 transition">
                       <LogIn className="w-5 h-5 text-white" />

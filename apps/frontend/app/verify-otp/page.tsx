@@ -30,14 +30,21 @@ export default function VerifyOtpPage() {
     setLoading(true);
 
     try {
-      const res = await axios.post("/api/auth/verifyOtp", { email, otp });
+      const res = await axios.post("/auth/verifyOtp", { email, otp });
       setSuccess(res.data.message || "Email verified successfully!");
 
       setTimeout(() => {
         router.push("/login");
       }, 1500);
     } catch (err: any) {
-      setError(err.response?.data?.message || "Verification failed");
+      const message = err.response?.data?.message || "Verification failed";
+      const remainingAttempts = err.response?.data?.remainingAttempts;
+
+      if (typeof remainingAttempts === "number") {
+        setError(`${message}. Remaining attempts: ${remainingAttempts}`);
+      } else {
+        setError(message);
+      }
     } finally {
       setLoading(false);
     }
@@ -46,6 +53,18 @@ export default function VerifyOtpPage() {
   return (
     <div className="max-w-md mx-auto mt-16 p-8 bg-white rounded-xl shadow-lg">
       <h2 className="text-2xl font-bold mb-4 text-center">Verify Your Email</h2>
+
+      {/* Gmail notification banner */}
+      <div className="flex items-center gap-3 bg-gradient-to-r from-red-50 via-orange-50 to-yellow-50 border-2 border-orange-400 rounded-xl px-4 py-3 mb-6 shadow-sm">
+        <span className="text-3xl">📧</span>
+        <div>
+          <p className="font-bold text-orange-600 text-sm leading-tight">Check Your Gmail!</p>
+          <p className="text-gray-700 text-sm leading-tight">
+            OTP has been sent to your{" "}
+            <span className="font-bold text-red-500 underline decoration-dotted">Gmail</span>
+          </p>
+        </div>
+      </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Email Input */}

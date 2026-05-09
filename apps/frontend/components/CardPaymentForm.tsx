@@ -28,7 +28,7 @@ export default function CardPaymentForm({
   onCancel,
   processing = false,
 }: CardPaymentFormProps) {
-  // Demo whitelist: 12 VISA, 12 MASTERCARD, 12 RUPAY last4 with their CVVs
+  // Demo whitelist: 36 allowed cards with matching CVVs
   const VISA_LAST4 = ['4242','1111','1234','6789','0001','2468','1357','9000','7007','8888','1212','3434'] as const;
   const MC_LAST4 = ['5555','5100','2222','2720','5412','5123','2233','2600','2711','5309','5511','5522'] as const;
   const RUPAY_LAST4 = ['6080','6521','5081','8192','8266','6011','6500','5085','8123','8210','6060','6585'] as const;
@@ -56,7 +56,7 @@ export default function CardPaymentForm({
       currency: currency,
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
-    }).format(amt);
+    }).format(amt / 100);
   };
 
   // Detect card type based on card number
@@ -239,6 +239,7 @@ export default function CardPaymentForm({
 
           <button
             onClick={handlePlaceOrder}
+            data-testid="place-order"
             className="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-xl hover:shadow-lg transition"
           >
             Place Order {formatAmount(amount)}
@@ -264,12 +265,12 @@ export default function CardPaymentForm({
 
       {showTokenHelp && (
         <div className="mb-4 p-3 rounded-xl bg-gray-900 text-gray-100 text-[11px] shadow-inner space-y-2 animate-fadeIn">
-          <p className="font-semibold text-xs text-white">Valid Demo Cards (use any 16 digits ending with these 4 + CVV):</p>
+          <p className="font-semibold text-xs text-white">36 Allowed Demo Cards (last 4 + matching CVV + future expiry):</p>
           <div className="grid grid-cols-3 gap-2">
             <div>
               <p className="text-[10px] font-bold text-blue-300 mb-1">VISA</p>
               {VISA_LAST4.map((last4,i)=>(
-                <div key={i} className="flex justify-between text-[11px]">
+                <div key={i} data-testid="card-token" className="flex justify-between text-[11px]">
                   <span>{last4}</span><span className="text-green-400">CVV {VISA_CVV[i]}</span>
                 </div>
               ))}
@@ -277,7 +278,7 @@ export default function CardPaymentForm({
             <div>
               <p className="text-[10px] font-bold text-orange-300 mb-1">MASTER</p>
               {MC_LAST4.map((last4,i)=>(
-                <div key={i} className="flex justify-between text-[11px]">
+                <div key={i} data-testid="card-token" className="flex justify-between text-[11px]">
                   <span>{last4}</span><span className="text-green-400">CVV {MC_CVV[i]}</span>
                 </div>
               ))}
@@ -285,7 +286,7 @@ export default function CardPaymentForm({
             <div>
               <p className="text-[10px] font-bold text-green-300 mb-1">RUPAY</p>
               {RUPAY_LAST4.map((last4,i)=>(
-                <div key={i} className="flex justify-between text-[11px]">
+                <div key={i} data-testid="card-token" className="flex justify-between text-[11px]">
                   <span>{last4}</span><span className="text-green-400">CVV {RUPAY_CVV[i]}</span>
                 </div>
               ))}
@@ -296,9 +297,9 @@ export default function CardPaymentForm({
       )}
 
       {/* Header with Product Info */}
-      <div className="mb-6 pb-6 border-b border-gray-200">
+      <div data-testid="selected-payment-method" className="mb-6 pb-6 border-b border-gray-200">
         <h3 className="text-xl font-bold text-gray-800 mb-2">Card Payment</h3>
-        <div className="flex justify-between items-center">
+        <div data-testid="payment-product-info" className="flex justify-between items-center">
           <div>
             <p className="text-sm text-gray-600">Product</p>
             <p className="font-semibold text-gray-800">{productName}</p>
@@ -322,6 +323,7 @@ export default function CardPaymentForm({
                 type="text"
                 value={cardNumber}
                 onChange={handleCardNumberChange}
+                data-testid="card-number"
                 placeholder="XXXX XXXX XXXX XXXX"
                 className={`w-full px-4 py-3 text-lg font-mono border-2 rounded-xl outline-none transition ${
                   errors.cardNumber
@@ -346,6 +348,7 @@ export default function CardPaymentForm({
               type="password"
               value={cvv}
               onChange={handleCvvChange}
+              data-testid="cvv"
               placeholder="***"
               maxLength={3}
               className={`w-full px-4 py-3 text-lg font-mono border-2 rounded-xl outline-none transition ${
@@ -362,6 +365,7 @@ export default function CardPaymentForm({
               type="text"
               value={expiry}
               onChange={handleExpiryChange}
+              data-testid="expiry"
               placeholder="MM/YY"
               maxLength={5}
               className={`w-full px-4 py-3 text-lg font-mono border-2 rounded-xl outline-none transition ${
@@ -378,6 +382,7 @@ export default function CardPaymentForm({
           <button
             type="button"
             onClick={onCancel}
+            data-testid="cancel-card"
             className="flex-1 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition"
           >
             Cancel
@@ -385,6 +390,7 @@ export default function CardPaymentForm({
           <button
             type="submit"
             disabled={processing}
+            data-testid="confirm-card"
             className={`flex-1 py-3 bg-gradient-to-r from-orange-500 to-pink-500 text-white font-bold rounded-xl hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed ${processing ? 'animate-pulse' : ''}`}
           >
             {processing ? 'Processing…' : 'Confirm Card'}

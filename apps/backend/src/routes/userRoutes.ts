@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { authenticateToken } from "../middlewares/authMiddleware";
-import { getUserProfile, updateUserProfile } from "../api/user/profile";
+import { getUserProfile, updateUserProfile, deleteUserAccount } from "../api/user/profile";
 import { getLoginHistory } from "../api/user/loginHistory";
 import upload from "../middlewares/upload"; // ✅ Add this line
 
@@ -18,5 +18,7 @@ router.put(
 );
 
 router.get("/login-history", authenticateToken, getLoginHistory);
+
+router.delete("/account", authenticateToken, deleteUserAccount);
 
 export default router;

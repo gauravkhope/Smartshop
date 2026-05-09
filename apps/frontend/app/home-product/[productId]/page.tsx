@@ -509,14 +509,15 @@ export default function HomeProductDetailPage() {
     if (!product) return;
 
     const numericId = getNumericId(product.id);
+    // Always use the original database price, NOT the homepage best deal discount
+    // Discount is only for display purposes on the homepage/detail page
     const originalPrice = typeof product.price === "string" ? parseFloat(product.price.replace(/,/g, "")) : product.price;
-    const price = product.discount ? originalPrice - (originalPrice * product.discount) / 100 : originalPrice;
 
     const cartItem = {
       id: numericId,
       name: product.name,
       brand: product.brand,
-      price: price,
+      price: originalPrice, // Use actual price, not discounted price
       image: product.image,
       category: productCategory,
       mainCategory: "",
@@ -532,17 +533,17 @@ export default function HomeProductDetailPage() {
     if (!product) return;
 
     const numericId = getNumericId(product.id);
+    // Always use the original database price, NOT the homepage best deal discount
     const originalPrice = typeof product.price === "string" ? parseFloat(product.price.replace(/,/g, "")) : product.price;
-    const price = product.discount ? originalPrice - (originalPrice * product.discount) / 100 : originalPrice;
 
     const wishlistItem = {
       id: numericId,
       name: product.name,
       brand: product.brand,
-      price: price,
+      price: originalPrice, // Use actual price, not discounted price
       image: product.image,
       category: productCategory,
-      discount: product.discount,
+      discount: product.discount, // Keep discount for display purposes only
     };
 
     if (isInWishlist(numericId)) {
@@ -569,9 +570,9 @@ export default function HomeProductDetailPage() {
     if (!product) return 0;
     const price = typeof product.price === "string" ? parseFloat(product.price.replace(/,/g, "")) : product.price;
     if (product.discount) {
-      return price - (price * product.discount) / 100;
+      return Math.floor(price - (price * product.discount) / 100);
     }
-    return price;
+    return Math.floor(price);
   };
 
   const formatPrice = (price: number) => {
@@ -828,7 +829,7 @@ export default function HomeProductDetailPage() {
               {/* Price */}
               <div className="bg-gradient-to-r from-orange-50 to-pink-50 dark:from-gray-800 dark:to-gray-700 rounded-2xl p-6">
                 <div className="flex items-baseline gap-4">
-                  <span className="text-5xl font-bold bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
+                  <span data-testid="product-price" className="text-5xl font-bold bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
                     {formatPrice(finalPrice)}
                   </span>
                   {product.discount && (
@@ -836,15 +837,22 @@ export default function HomeProductDetailPage() {
                       <span className="text-2xl text-gray-400 line-through">
                         {formatPrice(originalPrice)}
                       </span>
-                      <span className="text-green-600 font-bold text-xl">
+                      <span className="hidden sm:inline-block text-green-600 font-bold text-sm sm:text-xl">
                         Save {formatPrice(originalPrice - finalPrice)}
                       </span>
                     </>
                   )}
                 </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                  Inclusive of all taxes
-                </p>
+                <div className="mt-2 flex items-center justify-between gap-3">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Inclusive of all taxes
+                  </p>
+                  {product.discount && (
+                    <span className="sm:hidden text-green-600 font-bold text-sm whitespace-nowrap">
+                      Save {formatPrice(originalPrice - finalPrice)}
+                    </span>
+                  )}
+                </div>
               </div>
 
               {/* Size Selector - Only for Clothes and Footwear */}
@@ -907,7 +915,7 @@ export default function HomeProductDetailPage() {
                 <label className="block font-semibold text-gray-700 dark:text-gray-300 mb-3">
                   Quantity:
                 </label>
-                <div className="flex items-center gap-3 bg-white dark:bg-gray-800 rounded-lg shadow-md px-2 py-1 w-fit">
+                <div data-testid="quantity-selector" className="flex items-center gap-3 bg-white dark:bg-gray-800 rounded-lg shadow-md px-2 py-1 w-fit">
                   <button
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
                     className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"

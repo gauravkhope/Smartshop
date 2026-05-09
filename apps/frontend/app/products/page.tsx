@@ -13,6 +13,7 @@ import {
 import toast from "react-hot-toast";
 import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
+import GlassMorphismSkeletonLoader, { GlassMorphismSkeletonCard } from "@/components/GlassMorphismSkeleton";
 
 // Format price to INR (e.g. ₹1,23,456)
 const formatPrice = (value: number | string) => {
@@ -25,26 +26,6 @@ const formatPrice = (value: number | string) => {
     maximumFractionDigits: 0,
   }).format(num);
 };
-
-// Enhanced Shimmer Loading Component with Gradient Animation
-const ShimmerCard = () => (
-  <div className="bg-orange-50 rounded-xl shadow-md overflow-hidden border border-gray-100">
-    <div className="relative h-48 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 overflow-hidden animate-shimmer-wave">
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-shimmer-gradient"></div>
-    </div>
-    <div className="p-4 space-y-3">
-      <div className="h-4 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 rounded overflow-hidden animate-shimmer-wave">
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"></div>
-      </div>
-      <div className="h-3 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 rounded w-2/3 overflow-hidden animate-shimmer-wave"></div>
-      <div className="h-5 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 rounded w-1/2 overflow-hidden animate-shimmer-wave"></div>
-      <div className="flex gap-2 mt-4">
-        <div className="h-8 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 rounded flex-1 animate-shimmer-wave"></div>
-        <div className="h-8 w-8 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 rounded animate-shimmer-wave"></div>
-      </div>
-    </div>
-  </div>
-);
 
 
 
@@ -96,28 +77,86 @@ function AllProductsPage() {
   }, [searchParams]);
 
   useEffect(() => {
+    const hasLoadedBefore = window.localStorage.getItem("products_page_loaded_once") === "true";
+    const minimumLoadingDurationMs = hasLoadedBefore ? 2000 : 4000;
+    window.localStorage.setItem("products_page_loaded_once", "true");
+
     async function loadProducts() {
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL;
+      if (!apiBaseUrl) {
+        console.error("NEXT_PUBLIC_API_URL is not defined");
+        setProducts([]);
+        setLoading(false);
+        return;
+      }
+
+      const loadingStartedAt = Date.now();
       try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/products`,
-          {
-            cache: "no-store",
+        const pageSize = 100;
+        let page = 1;
+        let hasMore = true;
+        const allProducts: any[] = [];
+
+        while (hasMore) {
+          const res = await fetch(
+            `${apiBaseUrl}/api/products?page=${page}&limit=${pageSize}`,
+            {
+              cache: "no-store",
+            }
+          );
+
+          if (!res.ok) {
+            throw new Error(`Failed to fetch products page ${page}: ${res.status}`);
           }
-        );
-        const data = await res.json();
-        // Accept array, {products: [...]}, or {data: [...]}
-        if (Array.isArray(data)) {
-          setProducts(data);
-        } else if (Array.isArray(data.products)) {
-          setProducts(data.products);
-        } else if (Array.isArray(data.data)) {
-          setProducts(data.data);
-        } else {
-          setProducts([]);
+
+          const data = await res.json();
+          const batch = Array.isArray(data)
+            ? data
+            : Array.isArray(data?.products)
+              ? data.products
+              : Array.isArray(data?.data)
+                ? data.data
+                : [];
+
+          if (batch.length === 0) {
+            break;
+          }
+
+          allProducts.push(...batch);
+
+          if (Array.isArray(data)) {
+            hasMore = false;
+          } else if (typeof data?.hasMore === "boolean") {
+            hasMore = data.hasMore;
+          } else if (
+            Number.isInteger(data?.totalPages) &&
+            Number(data.totalPages) > 0
+          ) {
+            hasMore = page < Number(data.totalPages);
+          } else if (typeof data?.total === "number") {
+            hasMore = allProducts.length < data.total;
+          } else {
+            // Fallback for unknown API shape: continue while batches are full.
+            hasMore = batch.length === pageSize;
+          }
+
+          page += 1;
         }
+
+        // Keep latest occurrence by product id in case API returns overlap across pages.
+        const uniqueProducts = Array.from(
+          new Map(allProducts.map((p) => [p?.id, p])).values()
+        );
+        setProducts(uniqueProducts);
       } catch (error) {
         console.error("Error fetching products:", error);
+        setProducts([]);
       } finally {
+        const elapsed = Date.now() - loadingStartedAt;
+        const remainingDelay = Math.max(0, minimumLoadingDurationMs - elapsed);
+        if (remainingDelay > 0) {
+          await new Promise((resolve) => setTimeout(resolve, remainingDelay));
+        }
         setLoading(false);
       }
     }
@@ -248,15 +287,29 @@ function AllProductsPage() {
   const filteredProducts = useMemo(() => {
     let filtered: any[] = [];
 
+    const getCategoryValue = (product: any) =>
+      typeof product?.category === "string"
+        ? product.category
+        : product?.category?.name || "";
+
+    const getSubCategoryValue = (product: any) =>
+      typeof product?.subCategory === "string"
+        ? product.subCategory
+        : product?.subCategory?.name || "";
+
+    const getMainCategoryValue = (product: any) =>
+      typeof product?.mainCategory === "string" ? product.mainCategory : "";
+
     // If search is active, search across ALL products (ignore category filters)
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = products.filter(
         (p) =>
-          p.name.toLowerCase().includes(query) ||
-          p.category?.name?.toLowerCase().includes(query) ||
-          p.subCategory?.name?.toLowerCase().includes(query) ||
-          p.brand?.toLowerCase().includes(query)
+          String(p?.name || "").toLowerCase().includes(query) ||
+          getMainCategoryValue(p).toLowerCase().includes(query) ||
+          getCategoryValue(p).toLowerCase().includes(query) ||
+          getSubCategoryValue(p).toLowerCase().includes(query) ||
+          String(p?.brand || "").toLowerCase().includes(query)
       );
     } else {
       // Category filtering (only when no search)
@@ -370,11 +423,7 @@ function AllProductsPage() {
           </div>
         </div>
         <div className="max-w-7xl mx-auto px-8">
-          <div className="grid gap-6 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-            {Array.from({ length: 20 }).map((_, index) => (
-              <ShimmerCard key={index} />
-            ))}
-          </div>
+          <GlassMorphismSkeletonLoader count={20} fullSize />
         </div>
       </div>
     );

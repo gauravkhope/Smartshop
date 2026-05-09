@@ -1,15 +1,18 @@
 /**
  * Centralized API Configuration
- * Supports both local development and production deployments
+ * Uses the deployed backend by default so production builds never
+ * fall back to localhost.
  * 
  * Environment Variable: NEXT_PUBLIC_API_URL
- * Default Fallback: http://localhost:5000
+ * Default Fallback: https://smartshop-api-xd4o.onrender.com
  */
+
+const DEFAULT_API_URL = "https://smartshop-api-xd4o.onrender.com";
 
 export const getApiBaseUrl = (): string => {
   const baseUrl =
     process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ||
-    "http://localhost:5000";
+    DEFAULT_API_URL;
   return baseUrl;
 };
 

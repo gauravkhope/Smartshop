@@ -13,17 +13,17 @@ const heroBanners = [
 
 const trending = [
   { id: "t1", name: "iPhone 17 pro max", brand: "Apple", price:"1,49,999", image: "https://media-ik.croma.com/prod/https://media.tatacroma.com/Croma%20Assets/Communication/Mobiles/Images/317417_0_7ISiBcc4Y.png?updatedAt=1757529273198" },
-  { id: "t2", name: "Galaxy S25 ultra", brand: "Samsung", price: "1,39,999", image: "https://www.samsungmobilepress.com/file/9A8B0C5E7AE223941FE931B23B810EB4B0889FB378F9B1FA94096036C43DE1D9CBD04954550FBC1C771FCC793F100E9B5F5CA2F530F87B9FD4380D9EADEC2F54798273B45EB93A9033A5AD11EE2772F26A4BAD909A7CC2D855BCEDD00CD694A0D3D74A1A1DFD89AB23A207E29BB7C4FCB75408D09299E0D7A20B2E7C743E5C83BFD92E8F115E7A657CE4E9C368FF4F451E8D9FE7A63E4C776A67EDBF7A360A39" },
-  { id: "t3", name: "Dell Gaming laptop", brand: "dell", price: 99999, image: "https://i.dell.com/is/image/DellContent/content/dam/ss2/product-images/dell-client-products/notebooks/dell-plus/db16250/media-gallery/fpr/notebook-db16250nt-fpr-bl-gallery-2.psd?fmt=png-alpha&pscan=auto&scl=1&hei=804&wid=979&qlt=100,1&resMode=sharp2&size=979,804&chrss=full" },
-  { id: "t4", name: "Nike AirMax", brand: "Nike", price: 119999, image: "https://static.nike.com/a/images/t_web_pdp_936_v2/f_auto/07bbe928-6af1-45ac-b1c6-9f66949ed933/NIKE+AIR+MAX+90+PRM.png" },
-  { id: "t5", name: "Sony WH-1000XM5", brand: "Sony", price: 29999, image: "https://valueelectronics.com/wp-content/uploads/2022/05/WH-1000XM5_keyvisual_silver-Large-scaled.jpg" },
-  { id: "t6", name: "Samsung Watch Ultra", brand: "Samsung", price: 52999, image: "https://images.samsung.com/is/image/samsung/p6pim/in/2407/gallery/in-galaxy-watch-ultra-l705-sm-l705fdaains-542169127?$684_547_PNG$" },
-  { id: "t7", name: "Apple Watch Ultra", brand: "Apple", price: 11999, image: "https://media-ik.croma.com/prod/https://media.tatacroma.com/Croma%20Assets/Communication/Wearable%20Devices/Images/317431_0__5vYVlzqQN.png?updatedAt=1757600677496" },
+  { id: "t2", name: "Galaxy S25 ultra", brand: "Samsung", price: "1,39,999", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSZJ3_WSZd3HoTzwgSlGmFqcHoHmpcnAWoZXA&s" },
+  { id: "t3", name: "Dell Gaming laptop", brand: "dell", price: "99,999", image: "https://i.dell.com/is/image/DellContent/content/dam/ss2/product-images/dell-client-products/notebooks/dell-plus/db16250/media-gallery/fpr/notebook-db16250nt-fpr-bl-gallery-2.psd?fmt=png-alpha&pscan=auto&scl=1&hei=804&wid=979&qlt=100,1&resMode=sharp2&size=979,804&chrss=full" },
+  { id: "t4", name: "Nike AirMax", brand: "Nike", price: "11,999", image: "https://static.nike.com/a/images/t_web_pdp_936_v2/f_auto/07bbe928-6af1-45ac-b1c6-9f66949ed933/NIKE+AIR+MAX+90+PRM.png" },
+  { id: "t5", name: "Sony WH-1000XM5", brand: "Sony", price: "2,999", image: "https://valueelectronics.com/wp-content/uploads/2022/05/WH-1000XM5_keyvisual_silver-Large-scaled.jpg" },
+  { id: "t6", name: "Samsung Watch Ultra", brand: "Samsung", price: "52,999", image: "https://images.samsung.com/is/image/samsung/p6pim/in/2407/gallery/in-galaxy-watch-ultra-l705-sm-l705fdaains-542169127?$684_547_PNG$" },
+  { id: "t7", name: "Apple Watch Ultra", brand: "Apple", price: "11,999", image: "https://media-ik.croma.com/prod/https://media.tatacroma.com/Croma%20Assets/Communication/Wearable%20Devices/Images/317431_0__5vYVlzqQN.png?updatedAt=1757600677496" },
   { id: "t8", name: "LOUIS VUITTON Jacket", brand: "LOUIS VUITTON", price: "3,49,999", image: "https://in.louisvuitton.com/images/is/image/lv/1/PP_VP_L/louis-vuitton-monogram-puffer-jacket--FUOW41MHI107_PM2_Front%20view.jpg" },
-  { id: "t9", name: "LG Smart Refrigerator", brand: "LG", price: 65999, image: "https://www.lg.com/in/images/refrigerators/md07518083/gallery/GL-T412VPZX-Refrigerators-Front-View-DZ-01.jpg" },
-  { id: "t10", name: "Philips 4K TV", brand: "Philips", price: 45999, image: "https://images.philips.com/is/image/PhilipsConsumer/50PUT8115_94-IMS-en_IN" },
+  { id: "t9", name: "LG Smart Refrigerator", brand: "LG", price: "65,999", image: "https://www.lg.com/in/images/refrigerators/md07518083/gallery/GL-T412VPZX-Refrigerators-Front-View-DZ-01.jpg" },
+  { id: "t10", name: "Philips 4K TV", brand: "Philips", price: "45,999", image: "https://images.philips.com/is/image/PhilipsConsumer/50PUT8115_94-IMS-en_IN" },
   { id: "t11", name: "Raymond coat pant", brand: "Silk", price: "12,999", image: "https://www.thelibasstore.com/wp-content/uploads/2023/11/LSRAYTR341LGTSLVRGRYJAQSTRU140NOV-0.jpg" },
-  { id: "t12", name: "Adidas Ultraboost 22", brand: "Adidas", price: 14999, image: "https://u-mercari-images.mercdn.net/photos/m28686690553_1.jpg" },
+  { id: "t12", name: "Adidas Ultraboost 22", brand: "Adidas", price: "14,999", image: "https://u-mercari-images.mercdn.net/photos/m28686690553_1.jpg" },
 ];
 
 const mobiles = [
@@ -61,14 +61,14 @@ const laptops = [
 const appliances = [
   { id: "a1", name: "Samsung MICRO LED TV", brand: "Samsung", price: "1,14,99,999", image: "https://images.samsung.com/is/image/samsung/p6pim/in/mna110ms1acxxl/gallery/in-micro-led-2021-ms1a-mna110ms1acxxl-536972730?$684_547_PNG$" },
   { id: "a2", name: "Sony BRAVIA 8 II", brand: "Sony", price: "2,18,999", image: "https://media.tatacroma.com/Croma%20Assets/Entertainment/Television/Images/258523_0_lygda1.png" },
-  { id: "a3", name: "LG 8kg Fully Automatic Front Load Washing Machine", brand: "LG", price: "45999", image: "https://www.lg.com/content/dam/channel/wcms/in/images/washing-machines/fhp1208z5m_abmqeil_eail_in_c/gallery/FHP1208Z5M-1-2010x1334.jpg/jcr:content/renditions/thum-1600x1062.jpeg" },
-  { id: "a4", name: "Bosch Series 6 15 Place Settings Free Standing Dishwasher", brand: "Bosch", price: "65999", image: "https://media-ik.croma.com/prod/https://media.tatacroma.com/Croma%20Assets/Large%20Appliances/Dishwashers/Images/309171_0_tmfjcl.png?tr=w-600" },
-  { id: "a5", name: "Samsung Refrigerator", brand: "Samsung", price: "89999", image: "https://images.samsung.com/is/image/samsung/p6pim/in/rs76cg80x0s9hl/gallery/in-side-by-side-smart-conversion-456566-rs76cg80x0s9hl-thumb-549051325" },
+  { id: "a3", name: "LG 8kg Fully Automatic Front Load Washing Machine", brand: "LG", price: "45,999", image: "https://www.lg.com/content/dam/channel/wcms/in/images/washing-machines/fhp1208z5m_abmqeil_eail_in_c/gallery/FHP1208Z5M-1-2010x1334.jpg/jcr:content/renditions/thum-1600x1062.jpeg" },
+  { id: "a4", name: "Bosch Series 6 15 Place Settings Free Standing Dishwasher", brand: "Bosch", price: "65,999", image: "https://media-ik.croma.com/prod/https://media.tatacroma.com/Croma%20Assets/Large%20Appliances/Dishwashers/Images/309171_0_tmfjcl.png?tr=w-600" },
+  { id: "a5", name: "Samsung Refrigerator", brand: "Samsung", price: "89,999", image: "https://images.samsung.com/is/image/samsung/p6pim/in/rs76cg80x0s9hl/gallery/in-side-by-side-smart-conversion-456566-rs76cg80x0s9hl-thumb-549051325" },
 ];
 
 const clothes = [
   { id: "c1", name: "Fancy Women Dress", brand: "Fancy", price: "12,999", image: "https://assets.myntassets.com/dpr_1.5,q_30,w_400,c_limit,fl_progressive/assets/images/2024/OCTOBER/21/6yluxQL3_d01b23632c1c409ba30c65d6ecb9ca15.jpg" },
-  { id: "c2", name: "Co Ord Set for Women Beach Dress", brand: "Co ord", price: 14999, image: "https://m.media-amazon.com/images/I/51736s8xRiL._AC_UY1100_.jpg" },
+  { id: "c2", name: "Co Ord Set for Women Beach Dress", brand: "Co ord", price: "14,999", image: "https://m.media-amazon.com/images/I/51736s8xRiL._AC_UY1100_.jpg" },
   { id: "c3", name: "Puma Classic Hoodie", brand: "Puma", price: "4,999", image: "https://assets.myntassets.com/w_412,q_30,dpr_3,fl_progressive,f_webp/assets/images/25072310/2023/10/27/cffff245-fd63-4e86-a2c4-fdb4f8efae501698386573267-Essential-Big-Logo-Regular-Fit-Mens-Hoodie-7821698386572914-1.jpg" },
   { id: "c4", name: "Levi’s Denim Jacket", brand: "Levi's", price: "7,999", image: "https://levi.in/cdn/shop/files/003F80004_02_Front.jpg?v=1736333972" },
   { id: "c5", name: "H&M Clothes", brand: "H&M", price: "1,999", image: "https://www2.hm.com/content/dam/ind-local-assets/1320713001_202502_LB_1762-2x3.jpg" },

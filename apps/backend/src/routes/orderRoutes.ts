@@ -1,4 +1,5 @@
 import express from "express";
+import { authenticateToken } from "../middlewares/authMiddleware";
 import {
   createOrder,
   getUserOrders,
@@ -11,22 +12,23 @@ import {
 const router = express.Router();
 
 // Get all orders (admin) - MUST be before /:orderId route
-router.get("/", getAllOrders);
+router.get("/", authenticateToken, getAllOrders);
 
 // Create a new order
-router.post("/", createOrder);
+router.post("/", authenticateToken, createOrder);
 
 // Get all orders for a specific user
-router.get("/user/:userId", getUserOrders);
+router.get("/user/:userId", authenticateToken, getUserOrders);
 
-// Get a specific order by ID
-router.get("/:orderId", getOrderById);
 
 // Update order status
-router.patch("/:orderId/status", updateOrderStatus);
+router.patch("/:orderId/status", authenticateToken, updateOrderStatus);
 
 // Cancel an order
-router.patch("/:orderId/cancel", cancelOrder);
+router.patch("/:orderId/cancel", authenticateToken, cancelOrder);
+
+// Get a specific order by ID (must be last!)
+router.get("/:orderId", authenticateToken, getOrderById);
 
 
 export default router;

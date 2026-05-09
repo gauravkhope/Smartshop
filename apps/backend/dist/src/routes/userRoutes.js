@@ -15,4 +15,5 @@ router.get("/profile", authMiddleware_1.authenticateToken, profile_1.getUserProf
 router.put("/profile", authMiddleware_1.authenticateToken, upload_1.default.single("avatar"), // 👈 Handles avatar file upload
 profile_1.updateUserProfile);
 router.get("/login-history", authMiddleware_1.authenticateToken, loginHistory_1.getLoginHistory);
+router.delete("/account", authMiddleware_1.authenticateToken, profile_1.deleteUserAccount);
 exports.default = router;

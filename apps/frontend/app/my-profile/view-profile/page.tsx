@@ -1,20 +1,23 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/AuthContext";
 import { updateUserProfile } from "@/lib/api";
+import { API_BASE_URL } from "@/lib/config";
 import toast from "react-hot-toast";
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API_URL = API_BASE_URL;
 
 
 export default function ViewProfilePage() {
   // Auth context for global user state
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, logout } = useAuth();
+  const router = useRouter();
 
   // Provide fallback values if user is null
   const safeUser = {
-    name: user?.name || "Guest",
-    email: user?.email || "guest@example.com",
+    name: (user?.name || "Guest").trim(),
+    email: (user?.email || "guest@example.com").trim(),
     avatar: user?.avatar || "/images/avatars/avatar1.png",
   };
 
@@ -40,11 +43,26 @@ export default function ViewProfilePage() {
     avatar: safeUser.avatar,
   });
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [deleteSuccess, setDeleteSuccess] = useState("");
   const [deleteError, setDeleteError] = useState("");
   const [loading, setLoading] = useState(false);
   const [passwordUpdateSuccess, setPasswordUpdateSuccess] = useState("");
   const [passwordUpdateError, setPasswordUpdateError] = useState("");
+
+  // Sync form with current user whenever user context changes
+  useEffect(() => {
+    if (user?.name && user?.email) {
+      setForm((prev) => ({
+        ...prev,
+        name: user.name.trim(),
+        email: user.email.trim(),
+      }));
+      setLocalUser({
+        name: user.name.trim(),
+        email: user.email.trim(),
+        avatar: user.avatar || safeUser.avatar,
+      });
+    }
+  }, [user]);
 
   // 12 cartoon avatar images
   const avatarList = Array.from({ length: 12 }, (_, i) => `/images/avatars/avatar${i + 1}.png`);
@@ -52,13 +70,21 @@ export default function ViewProfilePage() {
   const handleDelete = async () => {
     setLoading(true);
     setDeleteError("");
-    setDeleteSuccess("");
     try {
-      await new Promise((res) => setTimeout(res, 1500));
-      setDeleteSuccess("Your account has been deleted. We're sorry to see you go!");
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+      const res = await fetch(`${API_URL}/api/user/account`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message || "Failed to delete account");
+      }
       setConfirmOpen(false);
-    } catch (e) {
-      setDeleteError("Failed to delete account. Please try again.");
+      logout();
+      router.push("/");
+    } catch (e: any) {
+      setDeleteError(e.message || "Failed to delete account. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -68,7 +94,9 @@ export default function ViewProfilePage() {
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    // Trim whitespace for email and name fields
+    const trimmedValue = (name === "email" || name === "name") ? value.trim() : value;
+    setForm((prev) => ({ ...prev, [name]: trimmedValue }));
   };
 
   const handleAvatarSelect = (avatar: string) => {
@@ -101,44 +129,72 @@ export default function ViewProfilePage() {
     e.preventDefault();
     setPasswordUpdateSuccess("");
     setPasswordUpdateError("");
+    setLoading(true);
+
+    // Client-side validation: check if profile fields have actually changed
+    const nameChanged = form.name.trim() !== (user?.name || "").trim();
+    const emailChanged = form.email.trim().toLowerCase() !== (user?.email || "").trim().toLowerCase();
+    const avatarChanged = customAvatarFile !== null || form.avatar !== (user?.avatar || "");
+
+    // If nothing changed in profile and no password update, show message and return
+    if (!nameChanged && !emailChanged && !avatarChanged && (!form.newPassword || !form.confirmNewPassword)) {
+      setLoading(false);
+      return;
+    }
 
     // First: send profile update (name, email, avatar)
-    try {
-      // updateUserProfile accepts either File or string for avatar
-      const payloadAvatar = customAvatarFile ? customAvatarFile : form.avatar;
+    if (nameChanged || emailChanged || avatarChanged) {
+      try {
+        // Only send fields that actually changed
+        const updatePayload: any = {};
+        
+        if (nameChanged) {
+          updatePayload.name = form.name.trim();
+        }
+        if (emailChanged) {
+          updatePayload.email = form.email.trim();
+        }
+        if (avatarChanged) {
+          updatePayload.avatar = customAvatarFile ? customAvatarFile : form.avatar;
+        }
 
-      const res = await updateUserProfile({
-        name: form.name,
-        email: form.email,
-        avatar: payloadAvatar,
-      });
+        const res = await updateUserProfile(updatePayload);
 
-      // res expected shape: { message, user }
-     if (res?.user) {
-  // ✅ Construct correct backend URL for avatar
-  const backendAvatarUrl = res.user.avatar?.startsWith("/uploads")
-    ? `${API_URL}${res.user.avatar}`
-    : res.user.avatar;
+        // res expected shape: { message, user }
+       if (res?.user) {
+    // ✅ Construct correct backend URL for avatar
+    const backendAvatarUrl = res.user.avatar?.startsWith("/uploads")
+      ? `${API_URL}${res.user.avatar}`
+      : res.user.avatar;
 
-  setLocalUser({
-    name: res.user.name,
-    email: res.user.email,
-    avatar: backendAvatarUrl || selectedAvatar,
-  });
+    setLocalUser({
+      name: res.user.name,
+      email: res.user.email,
+      avatar: backendAvatarUrl || selectedAvatar,
+    });
 
-  updateUser({
-    ...res.user,
-    avatar: backendAvatarUrl || selectedAvatar,
-  });
+    updateUser({
+      ...res.user,
+      avatar: backendAvatarUrl || selectedAvatar,
+    });
 
-  toast.success("Profile updated successfully!");
-}
- else {
-        toast.success("Profile updated (response missing user object).");
+    toast.success("Profile updated successfully!");
+  }
+   else {
+          toast.success("Profile updated (response missing user object).");
+        }
+      } catch (error: any) {
+        // Only show error if it's not the "same value" validation error
+        const errorMessage = error?.message || "Failed to update profile.";
+        if (!errorMessage.includes("must be different from")) {
+          toast.error(errorMessage);
+        }
+        // Only return early if we're not updating password
+        if (!form.newPassword || !form.confirmNewPassword || !passwordVerified) {
+          setLoading(false);
+          return;
+        }
       }
-    } catch (error: any) {
-      console.error("Profile update failed:", error);
-      toast.error(error?.message || "Failed to update profile.");
     }
 
     // Then: password update if required (unchanged original flow)
@@ -167,6 +223,8 @@ export default function ViewProfilePage() {
         }
       } catch (err) {
         setPasswordUpdateError("Server error. Please try again.");
+      } finally {
+        setLoading(false);
       }
     } else {
       // close edit mode if only profile change
@@ -175,6 +233,7 @@ export default function ViewProfilePage() {
       setPasswordVerified(false);
       setCurrentPassword("");
       setForm((prev) => ({ ...prev, newPassword: "", confirmNewPassword: "" }));
+      setLoading(false);
     }
   };
 
@@ -423,7 +482,7 @@ export default function ViewProfilePage() {
             </div>
           )}
 
-          {deleteSuccess && <div className="text-green-600 font-semibold mt-2">{deleteSuccess}</div>}
+        {/* end confirmOpen modal */}
         </div>
       </div>
     </div>

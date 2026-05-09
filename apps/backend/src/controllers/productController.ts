@@ -8,9 +8,21 @@ export const getProducts = async (req: Request, res: Response) => {
   try {
     const { page = "1", limit = "6", search, category, sort = "price_asc" } = req.query;
 
-    // Convert query params to numbers
-    const take = Number(limit);
-    const skip = (Number(page) - 1) * take;
+    // Strict validation: reject invalid page/limit values with 400.
+    const rawPage = Number(page);
+    const rawLimit = Number(limit);
+
+    if (!Number.isInteger(rawPage) || rawPage <= 0) {
+      return res.status(400).json({ message: "Invalid page parameter. 'page' must be a positive integer." });
+    }
+
+    if (!Number.isInteger(rawLimit) || rawLimit <= 0) {
+      return res.status(400).json({ message: "Invalid limit parameter. 'limit' must be a positive integer." });
+    }
+
+    const pageNum = rawPage;
+    const take = Math.min(rawLimit, 100);
+    const skip = (pageNum - 1) * take;
 
     // Build dynamic filter conditions
     const where: any = {};
@@ -48,7 +60,8 @@ export const getProducts = async (req: Request, res: Response) => {
       products,
       total,
       totalPages,
-      currentPage: Number(page),
+      currentPage: pageNum,
+      limit: take,
     });
   } catch (error) {
     console.error("❌ Error fetching products:", error);
