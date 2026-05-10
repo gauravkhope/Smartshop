@@ -66,125 +66,721 @@ export const sendRegistrationOtpEmail = async (
       subject: "Registration OTP - SmartShop",
 
       htmlContent: `
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-          <meta charset="UTF-8" />
-          <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-          <title>SmartShop – Verify Your Account</title>
-          <style>
-            * { box-sizing: border-box; margin: 0; padding: 0; }
+       <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SmartShop – Verify Your Account</title>
 
-            body {
-              background: #060410;
-              font-family: Arial, Helvetica, sans-serif;
-              min-height: 100vh;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              padding: 40px 16px;
-            }
+  <style>
 
-            .orb1 { position: fixed; width: 400px; height: 400px; border-radius: 50%; background: radial-gradient(circle, rgba(124,58,237,0.45) 0%, transparent 70%); top: -100px; left: -80px; pointer-events: none; }
-            .orb2 { position: fixed; width: 350px; height: 350px; border-radius: 50%; background: radial-gradient(circle, rgba(236,72,153,0.38) 0%, transparent 70%); bottom: -80px; right: -60px; pointer-events: none; }
-            .orb3 { position: fixed; width: 220px; height: 220px; border-radius: 50%; background: radial-gradient(circle, rgba(99,102,241,0.25) 0%, transparent 70%); top: 45%; right: 8%; pointer-events: none; }
+    *{
+      box-sizing:border-box;
+      margin:0;
+      padding:0;
+    }
 
-            .scene { width: 100%; max-width: 560px; position: relative; }
+    body{
+      background:#060410;
+      font-family:Arial, Helvetica, sans-serif;
+      margin:0;
+      padding:40px 16px;
+    }
 
-            .card { position: relative; width: 100%; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.13); border-radius: 28px; overflow: hidden; backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); }
-            .card-inner-border { position: absolute; inset: 0; border-radius: 28px; border: 1px solid rgba(255,255,255,0.08); pointer-events: none; z-index: 1; }
+    table{
+      border-spacing:0;
+    }
 
-            .header { padding: 2.5rem 2rem 2rem; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.07); position: relative; }
-            .header-shine { position: absolute; top: 0; left: 20%; right: 20%; height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent); }
-            .logo-mark { display: inline-flex; align-items: center; gap: 10px; }
-            .logo-icon { width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, #7c3aed, #ec4899); display: flex; align-items: center; justify-content: center; }
-            .logo-icon svg { width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-            .brand-name { font-size: 26px; font-weight: 700; color: #fff; letter-spacing: 0.4px; }
+    td{
+      padding:0;
+    }
 
-            .body { padding: 0.5rem 2rem 0.75rem; }
-            .greeting-label { font-size: 11px; letter-spacing: 3px; color: rgba(255,255,255,0.35); text-transform: uppercase; margin-bottom: 8px; }
-            .heading { font-size: 26px; font-weight: 700; color: #fff; line-height: 1.3; margin-bottom: 1rem; }
-            .smallheading {display: flex; justify-content: center;  font-size: 30px; font-weight: 600; color: rgba(255,255,255,0.6); line-height: 1.4; margin-bottom: 1rem; }
-            .subtext { font-size: 14px; line-height: 1.8; color: rgba(255,255,255,0.5); }
-            .subtext strong { color: rgba(255,255,255,0.9); font-weight: 600; }
+    .wrapper{
+      width:100%;
+      table-layout:fixed;
+      background:#060410;
+    }
 
-            .divider { margin: 1.5rem 2rem; height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent); }
+    /* =========================
+       BACKGROUND ORBS
+    ========================== */
 
-            .otp-section { padding: 0 2rem 0.5rem; display: flex; justify-content: center; }
-            .otp-pill { width: 100%; position: relative; border-radius: 20px; padding: 1.75rem 1.5rem; text-align: center; background: linear-gradient(135deg, rgba(124,58,237,0.9), rgba(236,72,153,0.9)); border: 1px solid rgba(255,255,255,0.2); overflow: hidden; }
-            .otp-pill-shine { position: absolute; top: 0; left: 10%; right: 10%; height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent); }
-            .otp-label { font-size: 11px; letter-spacing: 3.5px; color: rgba(255,255,255,0.65); text-transform: uppercase; margin-bottom: 20px; }
+    .orb1{
+      position:absolute;
+      width:400px;
+      height:400px;
+      border-radius:50%;
 
-            .otp-digits-row { display: flex; justify-content: center; align-items: center; gap: 8px; }
-            .digit-gap { width: 14px; }
+      background:
+      radial-gradient(
+        circle,
+        rgba(124,58,237,0.45) 0%,
+        transparent 70%
+      );
 
-            .digit-card { width: 50px; height: 66px; position: relative; border-radius: 14px; background: rgba(255,255,255,0.12); border-top: 1px solid rgba(255,255,255,0.5); border-left: 1px solid rgba(255,255,255,0.25); border-right: 1px solid rgba(255,255,255,0.06); border-bottom: 1px solid rgba(255,255,255,0.04); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; transform: perspective(350px) rotateX(7deg) rotateY(-1deg); box-shadow: 0 1px 0 rgba(255,255,255,0.18) inset, 0 12px 28px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.3); }
-            .digit-num { font-size: 36px; font-weight: 700; color: #fff; font-family: 'Courier New', Courier, monospace; position: relative; z-index: 1; text-shadow: 0 1px 0 rgba(255,255,255,0.45), 0 -1px 0 rgba(0,0,0,0.5), 0 0 18px rgba(220,180,255,0.55), 0 4px 10px rgba(0,0,0,0.55); }
+      top:-100px;
+      left:-80px;
 
-            .otp-underline { margin-top: 18px; display: flex; justify-content: center; gap: 6px; }
-            .otp-dot { width: 28px; height: 3px; border-radius: 2px; background: rgba(255,255,255,0.3); }
+      pointer-events:none;
+      z-index:0;
+    }
 
-            .info-section { padding: 1.25rem 2rem 1.75rem; display: flex; flex-direction: column; gap: 10px; }
-            .info-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; }
-            .info-text { font-size: 13px; color: rgba(255,255,255,0.5); line-height: 1.5; }
+    .orb2{
+      position:absolute;
+      width:350px;
+      height:350px;
+      border-radius:50%;
 
-            .footer { border-top: 1px solid rgba(255,255,255,0.07); padding: 1.25rem 2rem; text-align: center; position: relative; }
-            .footer-text { font-size: 12px; color: rgba(255,255,255,0.25); line-height: 1.9; }
-            .footer-dots { display: flex; justify-content: center; gap: 5px; margin-top: 10px; }
-            .footer-dot { width: 4px; height: 4px; border-radius: 50%; background: rgba(255,255,255,0.15); }
-            .footer-dot.active { background: rgba(124,58,237,0.75); }
-          </style>
-        </head>
-        <body>
-          <div class="orb1"></div>
-          <div class="orb2"></div>
-          <div class="orb3"></div>
+      background:
+      radial-gradient(
+        circle,
+        rgba(236,72,153,0.38) 0%,
+        transparent 70%
+      );
 
-          <div class="scene">
-            <div class="card">
-              <div class="card-inner-border"></div>
-              <div class="header">
-                <div class="header-shine"></div>
-                <div class="logo-mark">
-                  <div class="logo-icon">
-                    <svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-                  </div>
-                  <span class="brand-name">SmartShop</span>
-                </div>
-              </div>
+      bottom:-80px;
+      right:-60px;
 
-              <div class="body">
-              <div class="smallheading">Registration OTP</div>
-                <div class="greeting-label">Secure verification</div>
-                <div class="heading">Verify your account</div>
-                <div class="subtext">Hello <strong>${displayName}</strong>,<br/>Welcome to SmartShop. Use the secure verification code below to continue your authentication process.</div>
-              </div>
+      pointer-events:none;
+      z-index:0;
+    }
 
-              <div class="divider"></div>
+    .orb3{
+      position:absolute;
+      width:220px;
+      height:220px;
+      border-radius:50%;
 
-              <div class="otp-section">
-                <div class="otp-pill">
-                  <div class="otp-pill-shine"></div>
-                  <div class="otp-label">One-time passcode</div>
-                  <div class="otp-digits-row">
-                    ${digitsHtml}
-                  </div>
-                  <div class="otp-underline">
-                    ${dotsHtml}
-                  </div>
-                </div>
-              </div>
+      background:
+      radial-gradient(
+        circle,
+        rgba(99,102,241,0.25) 0%,
+        transparent 70%
+      );
 
-              <div class="info-section">
-                <div class="info-row"><div class="info-icon-wrap"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="info-text">Expires in <strong>10 minutes</strong> from the time it was sent</div></div>
-                <div class="info-row"><div class="info-icon-wrap"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><circle cx="12" cy="11" r="1" fill="rgba(255,255,255,0.7)" stroke="none"/><line x1="12" y1="12" x2="12" y2="15"/></svg></div><div class="info-text">Never share this code with anyone for security reasons</div></div>
-              </div>
+      top:45%;
+      right:8%;
 
-              <div class="footer"><div class="footer-text">© 2026 SmartShop. All rights reserved.</div><div class="footer-text">E-Commerce Platform</div><div class="footer-dots"><div class="footer-dot active"></div><div class="footer-dot"></div><div class="footer-dot"></div></div></div>
+      pointer-events:none;
+      z-index:0;
+    }
+
+    /* =========================
+       SCENE
+    ========================== */
+
+    .scene{
+      width:100%;
+      max-width:560px;
+      position:relative;
+      margin:0 auto;
+      z-index:2;
+    }
+
+    /* =========================
+       CARD
+    ========================== */
+
+    .card{
+      position:relative;
+      width:100%;
+
+      background:#141020;
+
+      border:
+      1px solid rgba(255,255,255,0.10);
+
+      border-radius:28px;
+
+      overflow:hidden;
+
+      box-shadow:
+      0 20px 60px rgba(0,0,0,0.45);
+    }
+
+    .card-inner-border{
+      position:absolute;
+      inset:0;
+
+      border-radius:28px;
+
+      border:
+      1px solid rgba(255,255,255,0.05);
+
+      pointer-events:none;
+      z-index:1;
+    }
+
+    /* =========================
+       HEADER
+    ========================== */
+
+    .header{
+      padding:2.5rem 2rem 2rem;
+
+      text-align:center;
+
+      border-bottom:
+      1px solid rgba(255,255,255,0.07);
+
+      position:relative;
+    }
+
+    .header-shine{
+      position:absolute;
+
+      top:0;
+      left:20%;
+      right:20%;
+
+      height:1px;
+
+      background:
+      linear-gradient(
+        90deg,
+        transparent,
+        rgba(255,255,255,0.35),
+        transparent
+      );
+    }
+
+    .logo-mark{
+      text-align:center;
+    }
+
+    .logo-icon{
+      width:38px;
+      height:38px;
+
+      border-radius:10px;
+
+      background:
+      linear-gradient(
+        135deg,
+        #7c3aed,
+        #ec4899
+      );
+
+      display:inline-block;
+
+      text-align:center;
+
+      line-height:38px;
+
+      vertical-align:middle;
+
+      box-shadow:
+      0 10px 24px rgba(124,58,237,0.30);
+    }
+
+    .logo-icon svg{
+      width:20px;
+      height:20px;
+
+      margin-top:9px;
+
+      fill:none;
+      stroke:#fff;
+      stroke-width:1.8;
+      stroke-linecap:round;
+      stroke-linejoin:round;
+    }
+
+    .brand-name{
+      display:inline-block;
+
+      vertical-align:middle;
+
+      margin-left:10px;
+
+      font-size:26px;
+      font-weight:700;
+
+      letter-spacing:0.4px;
+
+      color:#f3d7df;
+
+      background:
+      linear-gradient(
+        135deg,
+        #f5e6d3 0%,
+        #e9b8c7 38%,
+        #c084fc 72%,
+        #8b5cf6 100%
+      );
+
+      -webkit-background-clip:text;
+      background-clip:text;
+
+      -webkit-text-fill-color:transparent;
+
+      text-shadow:
+      0 2px 10px rgba(168,85,247,0.18);
+    }
+
+    /* =========================
+       BODY
+    ========================== */
+
+    .body{
+      padding:0.5rem 2rem 0.75rem;
+    }
+
+    .smallheading{
+      text-align:center;
+
+      font-size:30px;
+      font-weight:600;
+
+      color:rgba(255,255,255,0.60);
+
+      line-height:1.4;
+
+      margin-bottom:1rem;
+    }
+
+    .greeting-label{
+      font-size:11px;
+
+      letter-spacing:3px;
+
+      color:rgba(255,255,255,0.35);
+
+      text-transform:uppercase;
+
+      margin-bottom:8px;
+    }
+
+    .heading{
+      font-size:26px;
+      font-weight:700;
+
+      color:#fff;
+
+      line-height:1.3;
+
+      margin-bottom:1rem;
+    }
+
+    .subtext{
+      font-size:14px;
+
+      line-height:1.8;
+
+      color:rgba(255,255,255,0.5);
+    }
+
+    .subtext strong{
+      color:rgba(255,255,255,0.9);
+      font-weight:600;
+    }
+
+    /* =========================
+       DIVIDER
+    ========================== */
+
+    .divider{
+      margin:1.5rem 2rem;
+
+      height:1px;
+
+      background:
+      linear-gradient(
+        90deg,
+        transparent,
+        rgba(255,255,255,0.1),
+        transparent
+      );
+    }
+
+    /* =========================
+       OTP
+    ========================== */
+
+    .otp-section{
+      padding:0 2rem 0.5rem;
+      text-align:center;
+    }
+
+    .otp-pill{
+      width:100%;
+
+      position:relative;
+
+      border-radius:20px;
+
+      padding:1.75rem 1.5rem;
+
+      text-align:center;
+
+      background:
+      linear-gradient(
+        135deg,
+        rgba(124,58,237,0.95),
+        rgba(236,72,153,0.95)
+      );
+
+      border:
+      1px solid rgba(255,255,255,0.15);
+
+      overflow:hidden;
+
+      box-shadow:
+      0 18px 40px rgba(124,58,237,0.25);
+    }
+
+    .otp-pill-shine{
+      position:absolute;
+
+      top:0;
+      left:10%;
+      right:10%;
+
+      height:1px;
+
+      background:
+      linear-gradient(
+        90deg,
+        transparent,
+        rgba(255,255,255,0.55),
+        transparent
+      );
+    }
+
+    .otp-label{
+      font-size:11px;
+
+      letter-spacing:3.5px;
+
+      color:rgba(255,255,255,0.65);
+
+      text-transform:uppercase;
+
+      margin-bottom:20px;
+    }
+
+    .otp-digits-row{
+      text-align:center;
+    }
+
+    .digit-card{
+      width:50px;
+      height:66px;
+
+      display:inline-block;
+
+      line-height:66px;
+
+      border-radius:14px;
+
+      background:
+      rgba(255,255,255,0.10);
+
+      border-top:
+      1px solid rgba(255,255,255,0.35);
+
+      border-left:
+      1px solid rgba(255,255,255,0.15);
+
+      border-right:
+      1px solid rgba(255,255,255,0.05);
+
+      border-bottom:
+      1px solid rgba(255,255,255,0.03);
+
+      box-shadow:
+      0 10px 24px rgba(0,0,0,0.35),
+      inset 0 1px 0 rgba(255,255,255,0.12);
+
+      margin:0 4px;
+    }
+
+    .digit-num{
+      font-size:36px;
+      font-weight:700;
+
+      color:#fff;
+
+      font-family:'Courier New', Courier, monospace;
+
+      text-shadow:
+      0 0 12px rgba(220,180,255,0.35),
+      0 4px 10px rgba(0,0,0,0.45);
+    }
+
+    .digit-gap{
+      width:14px;
+      display:inline-block;
+    }
+
+    .otp-underline{
+      margin-top:18px;
+
+      text-align:center;
+    }
+
+    .otp-dot{
+      width:28px;
+      height:3px;
+
+      border-radius:2px;
+
+      background:rgba(255,255,255,0.3);
+
+      display:inline-block;
+
+      margin:0 3px;
+    }
+
+    /* =========================
+       INFO
+    ========================== */
+
+    .info-section{
+      padding:1.25rem 2rem 1.75rem;
+    }
+
+    .info-row{
+      padding:12px 14px;
+
+      background:
+      rgba(255,255,255,0.04);
+
+      border:
+      1px solid rgba(255,255,255,0.06);
+
+      border-radius:12px;
+
+      margin-bottom:10px;
+    }
+
+    .info-text{
+      font-size:13px;
+
+      color:rgba(255,255,255,0.5);
+
+      line-height:1.5;
+    }
+
+    .info-text strong{
+      color:#fff;
+    }
+
+    /* =========================
+       FOOTER
+    ========================== */
+
+    .footer{
+      border-top:
+      1px solid rgba(255,255,255,0.07);
+
+      padding:1.25rem 2rem;
+
+      text-align:center;
+    }
+
+    .footer-text{
+      font-size:12px;
+
+      color:rgba(255,255,255,0.25);
+
+      line-height:1.9;
+    }
+
+    .footer-dots{
+      text-align:center;
+
+      margin-top:10px;
+    }
+
+    .footer-dot{
+      width:4px;
+      height:4px;
+
+      border-radius:50%;
+
+      background:rgba(255,255,255,0.15);
+
+      display:inline-block;
+
+      margin:0 2px;
+    }
+
+    .footer-dot.active{
+      background:rgba(124,58,237,0.75);
+    }
+
+    /* =========================
+       MOBILE
+    ========================== */
+
+    @media only screen and (max-width:600px){
+
+      .heading{
+        font-size:24px;
+      }
+
+      .smallheading{
+        font-size:26px;
+      }
+
+      .digit-card{
+        width:42px;
+        height:58px;
+        line-height:58px;
+      }
+
+      .digit-num{
+        font-size:30px;
+      }
+
+    }
+
+  </style>
+</head>
+
+<body>
+
+  <div class="wrapper">
+
+    <div class="orb1"></div>
+    <div class="orb2"></div>
+    <div class="orb3"></div>
+
+    <div class="scene">
+
+      <div class="card">
+
+        <div class="card-inner-border"></div>
+
+        <!-- HEADER -->
+        <div class="header">
+
+          <div class="header-shine"></div>
+
+          <div class="logo-mark">
+
+            <div class="logo-icon">
+
+              <svg viewBox="0 0 24 24">
+                <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <path d="M16 10a4 4 0 0 1-8 0"/>
+              </svg>
+
             </div>
+
+            <span class="brand-name">
+              SmartShop
+            </span>
+
           </div>
-        </body>
-        </html>
+
+        </div>
+
+        <!-- BODY -->
+        <div class="body">
+
+          <div class="smallheading">
+            Registration OTP
+          </div>
+
+          <div class="greeting-label">
+            Secure verification
+          </div>
+
+          <div class="heading">
+            Verify your account
+          </div>
+
+          <div class="subtext">
+            Hello <strong>${displayName}</strong>,<br/>
+            Welcome to SmartShop. Use the secure verification code below to continue your authentication process.
+          </div>
+
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- OTP -->
+        <div class="otp-section">
+
+          <div class="otp-pill">
+
+            <div class="otp-pill-shine"></div>
+
+            <div class="otp-label">
+              One-time passcode
+            </div>
+
+            <div class="otp-digits-row">
+
+              ${digitsHtml}
+
+            </div>
+
+            <div class="otp-underline">
+
+              ${dotsHtml}
+
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- INFO -->
+        <div class="info-section">
+
+          <div class="info-row">
+
+            <div class="info-text">
+              Expires in <strong>10 minutes</strong> from the time it was sent
+            </div>
+
+          </div>
+
+          <div class="info-row">
+
+            <div class="info-text">
+              Never share this code with anyone for security reasons
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- FOOTER -->
+        <div class="footer">
+
+          <div class="footer-text">
+            © 2026 SmartShop. All rights reserved.
+          </div>
+
+          <div class="footer-text">
+            E-Commerce Platform
+          </div>
+
+          <div class="footer-dots">
+
+            <div class="footer-dot active"></div>
+            <div class="footer-dot"></div>
+            <div class="footer-dot"></div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</body>
+</html>
+
       `,
     });
 
