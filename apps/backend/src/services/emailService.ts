@@ -66,7 +66,7 @@ export const sendRegistrationOtpEmail = async (
       subject: "Registration OTP - SmartShop",
 
       htmlContent: `
-     <!DOCTYPE html>
+   <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -107,32 +107,32 @@ export const sendRegistrationOtpEmail = async (
       background:
 
       radial-gradient(
-        circle at 8% 16%,
+        circle at 25% 16%,
         rgba(124,58,237,0.38),
         transparent 24%
       ),
 
       radial-gradient(
-        circle at 92% 18%,
+        circle at 75% 18%,
         rgba(236,72,153,0.28),
         transparent 24%
       ),
 
       radial-gradient(
-        circle at 10% 84%,
+        circle at 25% 80%,
         rgba(236,72,153,0.22),
         transparent 22%
       ),
 
       radial-gradient(
-        circle at 90% 88%,
+        circle at 75% 80%,
         rgba(124,58,237,0.24),
         transparent 22%
       ),
 
       linear-gradient(
         180deg,
-        #05030d 0%,
+         rgba(79, 14, 47, 0.768) 0%,
         #090612 100%
       );
     }
@@ -155,7 +155,7 @@ export const sendRegistrationOtpEmail = async (
       position:relative;
 
       background:
-      rgba(10,8,24,0.70);
+      rgba(0, 0, 0, 0.115);
 
       border:
       1px solid rgba(255,255,255,0.12);
@@ -195,21 +195,31 @@ export const sendRegistrationOtpEmail = async (
       position:relative;
     }
 
-    .brand{
+   .brand{
 
-  font-size:58px;
+  font-size:40px;
   font-weight:800;
 
   letter-spacing:1.5px;
 
+  /* FALLBACK COLOR FOR UNSUPPORTED EMAIL CLIENTS */
+
+  color:#f7c9d4;
+
+  /* LUXURY GRADIENT */
+
   background:
   linear-gradient(
     135deg,
-    #8b5cf6 0%,
-    #c084fc 38%,
-    #f9a8d4 72%,
-    #ec4899 100%
+    #fff8f1 0%,
+    #fde7dc 12%,
+    #f7c9d4 30%,
+    #f4aac4 48%,
+    #d4bbef 72%,
+    #b5a2d6 100%
   );
+
+  /* GRADIENT TEXT */
 
   -webkit-background-clip:text;
   background-clip:text;
@@ -219,11 +229,11 @@ export const sendRegistrationOtpEmail = async (
   /* SOFT LUXURY GLOW */
 
   text-shadow:
-    0 0 6px rgba(192,132,252,0.22),
-    0 0 18px rgba(236,72,153,0.12),
+    0 0 6px rgba(192,132,252,0.18),
+    0 0 14px rgba(236,72,153,0.10),
     0 2px 8px rgba(0,0,0,0.18);
 
-  /* SOFTER LETTER RENDERING */
+  /* FONT RENDERING */
 
   -webkit-font-smoothing:antialiased;
   -moz-osx-font-smoothing:grayscale;
@@ -233,7 +243,6 @@ export const sendRegistrationOtpEmail = async (
     Arial,
     sans-serif;
 }
-
     .top-line{
 
       width:100%;
@@ -285,7 +294,7 @@ export const sendRegistrationOtpEmail = async (
 
     .body{
 
-      padding:24px 38px 10px;
+      padding:24px 32px 10px;
     }
 
     .small-heading{
@@ -398,21 +407,21 @@ export const sendRegistrationOtpEmail = async (
 
     .digit{
 
-      width:58px;
-      height:74px;
+      width:44px;
+      height:54px;
 
       display:inline-block;
 
       vertical-align:top;
 
-      line-height:74px;
+      line-height:64px;
 
       margin:0 4px;
 
-      border-radius:16px;
+      border-radius:12px;
 
-      font-size:42px;
-      font-weight:700;
+      font-size:32px;
+      font-weight:600;
 
       color:#ffffff;
 
@@ -583,7 +592,7 @@ export const sendRegistrationOtpEmail = async (
     }
 
     .dot-pink{
-      background:#ec4899;
+      background:#ec529f;
     }
 
     /* =========================
@@ -605,11 +614,11 @@ export const sendRegistrationOtpEmail = async (
       }
 
       .brand{
-        font-size:40px;
+        font-size:32px;
       }
 
       .body{
-        padding:20px 24px 8px;
+        padding:20px 22px 8px;
       }
 
       .small-heading{
@@ -649,16 +658,16 @@ export const sendRegistrationOtpEmail = async (
 
       .digit{
 
-        width:44px;
-        height:58px;
+        width:32px;
+        height:48px;
 
         line-height:58px;
 
         margin:0 2px;
 
-        font-size:30px;
+        font-size:26px;
 
-        border-radius:14px;
+        border-radius:12px;
       }
 
       .line{
