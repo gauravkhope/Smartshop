@@ -25,15 +25,12 @@ const CategorySection: React.FC<CategorySectionProps> = ({
 }) => {
   const [wishlist, setWishlist] = useState<number[]>([]);
   const [burstingId, setBurstingId] = useState<number | null>(null);
-  const [isMobile, setIsMobile] = useState(() => {
-    if (typeof window !== "undefined") {
-      return window.innerWidth < 640;
-    }
-    return false;
-  });
+  const [mounted, setMounted] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const { addToCart } = useCart();
 
   useEffect(() => {
+    setMounted(true);
     const handleResize = () => {
       setIsMobile(window.innerWidth < 640);
     };
@@ -64,8 +61,8 @@ const CategorySection: React.FC<CategorySectionProps> = ({
     addToCart(cartItem);
   }, [addToCart]);
 
-  // Show 6 products on mobile, keep the current homepage limit elsewhere.
-  const visibleProducts = products.slice(0, isMobile ? 6 : 5);
+  // Show 6 products on mobile (after mount), keep 5 elsewhere.
+  const visibleProducts = products.slice(0, mounted && isMobile ? 6 : 5);
 
   return (
     <section className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 mt-8 sm:mt-12">

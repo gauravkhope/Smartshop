@@ -408,22 +408,30 @@ html {
 /* Mobile-only: Reduce input box length on mobile */
 @media (max-width: 640px) {
   .check-delivery {
-    padding: 12px !important;
+    padding: 10px !important;
+    width: 100% !important;
+    overflow: hidden !important;
   }
   .check-delivery > .flex {
     display: flex !important;
     flex-direction: row !important;
-    gap: 8px !important;
+    gap: 6px !important;
     align-items: center !important;
+    flex-wrap: nowrap !important;
+    width: 100% !important;
   }
   .check-delivery input,
   .check-delivery .flex-1 {
-    width: 120px !important;
-    max-width: 120px !important;
-    flex: 0 0 120px !important;
+    width: 100px !important;
+    max-width: 100px !important;
+    flex: 0 0 100px !important;
+    padding: 0.4rem 0.5rem !important;
+    font-size: 0.875rem !important;
   }
   .check-delivery button {
-    padding: 0.5rem 1rem !important;
+    flex: 0 0 auto !important;
+    padding: 0.4rem 0.75rem !important;
+    font-size: 0.875rem !important;
     white-space: nowrap !important;
   }
 }
