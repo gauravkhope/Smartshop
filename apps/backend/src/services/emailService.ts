@@ -21,24 +21,16 @@ const toTitleCaseName = (value: string): string =>
 
 const createTransporter = () => {
   return nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT),
+    host: "smtp-relay.brevo.com",
 
-    secure: false,
-    requireTLS: true,
+    port: 465,
+
+    secure: true,
 
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASSWORD,
     },
-
-    tls: {
-      rejectUnauthorized: false,
-    },
-
-    connectionTimeout: 30000,
-    greetingTimeout: 30000,
-    socketTimeout: 30000,
   });
 };
 
