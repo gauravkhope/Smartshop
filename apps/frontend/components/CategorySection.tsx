@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import ProductCard from "./ProductCard";
 import { useCart } from "../app/context/CartContext";
 
@@ -25,7 +25,18 @@ const CategorySection: React.FC<CategorySectionProps> = ({
 }) => {
   const [wishlist, setWishlist] = useState<number[]>([]);
   const [burstingId, setBurstingId] = useState<number | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
   const { addToCart } = useCart();
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 640px)");
+
+    const updateIsMobile = () => setIsMobile(mediaQuery.matches);
+    updateIsMobile();
+
+    mediaQuery.addEventListener("change", updateIsMobile);
+    return () => mediaQuery.removeEventListener("change", updateIsMobile);
+  }, []);
 
   const toggleWishlist = useCallback((id: number) => {
     setWishlist((prev) =>
@@ -48,8 +59,8 @@ const CategorySection: React.FC<CategorySectionProps> = ({
     addToCart(cartItem);
   }, [addToCart]);
 
-  // Only 6 products visible on homepage
-  const visibleProducts = products.slice(0, 6);
+  // Show 6 products on mobile, keep the current homepage limit elsewhere.
+  const visibleProducts = products.slice(0, isMobile ? 6 : 5);
 
   return (
     <section className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 mt-8 sm:mt-12">
