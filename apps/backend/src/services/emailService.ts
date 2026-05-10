@@ -1004,7 +1004,7 @@ export const sendWelcomeEmail = async (
 
         <div class="hero-description">
 
-          Hello <strong>Alex Johnson</strong>,<br><br>
+          Hello <strong>${displayName}</strong>,<br><br>
 
           Your account has been successfully created and your
           premium shopping experience is now ready.
