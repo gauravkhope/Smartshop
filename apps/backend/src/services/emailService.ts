@@ -9,7 +9,10 @@ const toTitleCaseName = (value: string): string =>
     .trim()
     .split(/\s+/)
     .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .map(
+      (part) =>
+        part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()
+    )
     .join(" ");
 
 const sender = {
@@ -33,7 +36,7 @@ export const verifyEmailTransporter = async (): Promise<void> => {
 export const sendRegistrationOtpEmail = async (
   to: string,
   name: string,
-  verificationCode: string,
+  verificationCode: string
 ) => {
   const displayName = toTitleCaseName(name);
 
@@ -42,10 +45,7 @@ export const sendRegistrationOtpEmail = async (
     const digitsHtml = digits
       .map((d, i) => {
         if (i === 3) {
-          return (
-            '<div class="digit-gap"></div>' +
-            `<div class="digit-card"><span class="digit-num">${d}</span></div>`
-          );
+          return '<div class="digit-gap"></div>' + `<div class="digit-card"><span class="digit-num">${d}</span></div>`;
         }
         return `<div class="digit-card"><span class="digit-num">${d}</span></div>`;
       })
@@ -66,7 +66,7 @@ export const sendRegistrationOtpEmail = async (
       subject: "Registration OTP - SmartShop",
 
       htmlContent: `
-      <!DOCTYPE html>
+     <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
@@ -86,130 +86,56 @@ export const sendRegistrationOtpEmail = async (
       background:#060410;
       font-family:Arial, Helvetica, sans-serif;
       margin:0;
-      padding:18px 12px 28px;
+      padding:0;
     }
+
+    /* =========================
+       LUXURY BACKGROUND GLOW
+    ========================== */
 
     .wrapper{
       width:100%;
       position:relative;
       overflow:hidden;
-    }
 
-    /* =========================
-       DARK LUXURY GLOW BUBBLES
-    ========================== */
+      padding:18px 12px 28px;
 
-    .orb{
-      position:absolute;
-      border-radius:50%;
-      z-index:0;
-    }
+      background-color:#060410;
 
-    /* PURPLE 1 */
+      background-image:
 
-    .orb1{
-      width:280px;
-      height:280px;
-
-      top:-70px;
-      left:-70px;
-
-      background:
       radial-gradient(
-        circle,
-        rgba(124,58,237,0.42) 0%,
-        rgba(88,28,135,0.22) 34%,
-        rgba(20,16,32,0) 74%
-      );
-    }
+        circle at 12% 18%,
+        rgba(124,58,237,0.32) 0%,
+        rgba(124,58,237,0.12) 16%,
+        transparent 32%
+      ),
 
-    /* PINK 1 */
-
-    .orb2{
-      width:250px;
-      height:250px;
-
-      top:40px;
-      right:-60px;
-
-      background:
       radial-gradient(
-        circle,
-        rgba(236,72,153,0.34) 0%,
-        rgba(131,24,67,0.16) 34%,
-        rgba(20,16,32,0) 74%
-      );
-    }
+        circle at 88% 22%,
+        rgba(236,72,153,0.26) 0%,
+        rgba(236,72,153,0.10) 14%,
+        transparent 28%
+      ),
 
-    /* PURPLE 2 */
-
-    .orb3{
-      width:230px;
-      height:230px;
-
-      top:320px;
-      left:-80px;
-
-      background:
       radial-gradient(
-        circle,
-        rgba(139,92,246,0.30) 0%,
-        rgba(67,56,202,0.14) 36%,
-        rgba(20,16,32,0) 76%
-      );
-    }
+        circle at 10% 74%,
+        rgba(236,72,153,0.22) 0%,
+        rgba(236,72,153,0.08) 15%,
+        transparent 28%
+      ),
 
-    /* PINK 2 */
-
-    .orb4{
-      width:280px;
-      height:280px;
-
-      top:420px;
-      right:-90px;
-
-      background:
       radial-gradient(
-        circle,
-        rgba(244,114,182,0.28) 0%,
-        rgba(131,24,67,0.14) 36%,
-        rgba(20,16,32,0) 76%
-      );
-    }
+        circle at 88% 84%,
+        rgba(124,58,237,0.24) 0%,
+        rgba(124,58,237,0.10) 16%,
+        transparent 30%
+      ),
 
-    /* PURPLE 3 */
-
-    .orb5{
-      width:240px;
-      height:240px;
-
-      bottom:120px;
-      left:-40px;
-
-      background:
-      radial-gradient(
-        circle,
-        rgba(168,85,247,0.30) 0%,
-        rgba(88,28,135,0.14) 36%,
-        rgba(20,16,32,0) 76%
-      );
-    }
-
-    /* PINK 3 */
-
-    .orb6{
-      width:300px;
-      height:300px;
-
-      bottom:-100px;
-      right:-70px;
-
-      background:
-      radial-gradient(
-        circle,
-        rgba(236,72,153,0.30) 0%,
-        rgba(131,24,67,0.14) 36%,
-        rgba(20,16,32,0) 76%
+      linear-gradient(
+        180deg,
+        #05030d 0%,
+        #090612 100%
       );
     }
 
@@ -224,17 +150,21 @@ export const sendRegistrationOtpEmail = async (
       margin:0 auto;
 
       position:relative;
-      z-index:2;
     }
 
     /* =========================
-       CARD
+       MAIN CARD
     ========================== */
 
     .card{
       width:100%;
 
-      background:#141020;
+      background:
+      linear-gradient(
+        145deg,
+        rgba(15,10,30,0.98),
+        rgba(10,8,24,0.98)
+      );
 
       border:
       1px solid rgba(255,255,255,0.08);
@@ -243,10 +173,10 @@ export const sendRegistrationOtpEmail = async (
 
       overflow:hidden;
 
-      box-shadow:
-      0 20px 60px rgba(0,0,0,0.45);
-
       position:relative;
+
+      box-shadow:
+      0 24px 70px rgba(0,0,0,0.58);
     }
 
     .card::before{
@@ -259,6 +189,37 @@ export const sendRegistrationOtpEmail = async (
 
       border:
       1px solid rgba(255,255,255,0.04);
+
+      pointer-events:none;
+    }
+
+    /* SOFT INTERNAL GLOW */
+
+    .card::after{
+      content:"";
+
+      position:absolute;
+      inset:0;
+
+      background:
+
+      radial-gradient(
+        circle at top left,
+        rgba(124,58,237,0.10),
+        transparent 28%
+      ),
+
+      radial-gradient(
+        circle at top right,
+        rgba(236,72,153,0.08),
+        transparent 26%
+      ),
+
+      radial-gradient(
+        circle at bottom center,
+        rgba(124,58,237,0.08),
+        transparent 32%
+      );
 
       pointer-events:none;
     }
@@ -515,10 +476,21 @@ export const sendRegistrationOtpEmail = async (
       margin-bottom:20px;
     }
 
+    /* =========================
+       OTP ROW
+    ========================== */
+
     .otp-digits-row{
       text-align:center;
+
       white-space:nowrap;
+
+      font-size:0;
     }
+
+    /* =========================
+       OTP DIGIT CARD
+    ========================== */
 
     .digit-card{
       width:44px;
@@ -715,14 +687,6 @@ export const sendRegistrationOtpEmail = async (
 
   <div class="wrapper">
 
-    <!-- GLOW BUBBLES -->
-    <div class="orb orb1"></div>
-    <div class="orb orb2"></div>
-    <div class="orb orb3"></div>
-    <div class="orb orb4"></div>
-    <div class="orb orb5"></div>
-    <div class="orb orb6"></div>
-
     <div class="scene">
 
       <div class="card">
@@ -869,7 +833,7 @@ export const sendRegistrationOtpEmail = async (
 export const sendPasswordResetCodeEmail = async (
   to: string,
   name: string,
-  verificationCode: string,
+  verificationCode: string
 ) => {
   const displayName = toTitleCaseName(name);
 
@@ -878,16 +842,13 @@ export const sendPasswordResetCodeEmail = async (
     const digitsHtml = digits
       .map((d, i) => {
         if (i === 3) {
-          return (
-            '<div class="digit-gap"></div>' +
-            `<div class="digit-card"><span class="digit-num">${d}</span></div>`
-          );
+          return '<div class="digit-gap"></div>' + `<div class="digit-card"><span class="digit-num">${d}</span></div>`;
         }
         return `<div class="digit-card"><span class="digit-num">${d}</span></div>`;
       })
       .join("");
 
-    const dotsHtml = digits.map(() => `<div class="otp-dot"></div>`).join("");
+    const dotsHtml = digits.map(() => `<div class="otp-dot"></div>`).join('');
     const response = await brevo.transactionalEmails.sendTransacEmail({
       sender,
 
@@ -1036,7 +997,10 @@ export const sendPasswordResetCodeEmail = async (
 // WELCOME EMAIL
 // ======================================
 
-export const sendWelcomeEmail = async (to: string, name: string) => {
+export const sendWelcomeEmail = async (
+  to: string,
+  name: string
+) => {
   try {
     const displayName = toTitleCaseName(name);
 
