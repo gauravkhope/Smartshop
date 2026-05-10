@@ -24,6 +24,7 @@
   "license": "ISC",
   "dependencies": {
     "@faker-js/faker": "^10.1.0",
+    "@getbrevo/brevo": "^5.0.4",
     "@prisma/client": "^6.19.0",
     "@types/next": "^8.0.7",
     "@types/nodemailer": "^7.0.3",
