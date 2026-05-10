@@ -21,7 +21,7 @@ const sender = {
 };
 
 const otpDigitStyle =
-  "display:inline-block;width:38px;height:48px;vertical-align:middle;line-height:48px;border-radius:12px;font-size:28px;font-weight:600;color:#ffffff;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.14);box-shadow:inset 0 1px 0 rgba(255,255,255,0.10),0 12px 24px rgba(0,0,0,0.24);text-shadow:0 0 14px rgba(255,255,255,0.22);";
+  "display:inline-block;width:32px;height:42px;vertical-align:middle;line-height:42px;border-radius:12px;font-size:24px;font-weight:600;color:#ffffff;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.14);box-shadow:inset 0 1px 0 rgba(255,255,255,0.10),0 12px 24px rgba(0,0,0,0.24);text-shadow:0 0 14px rgba(255,255,255,0.22);";
 
 const buildOtpCells = (verificationCode: string): string =>
   String(verificationCode)
