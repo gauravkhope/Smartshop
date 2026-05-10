@@ -25,17 +25,22 @@ const CategorySection: React.FC<CategorySectionProps> = ({
 }) => {
   const [wishlist, setWishlist] = useState<number[]>([]);
   const [burstingId, setBurstingId] = useState<number | null>(null);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window !== "undefined") {
+      return window.innerWidth < 640;
+    }
+    return false;
+  });
   const { addToCart } = useCart();
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia("(max-width: 640px)");
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
 
-    const updateIsMobile = () => setIsMobile(mediaQuery.matches);
-    updateIsMobile();
-
-    mediaQuery.addEventListener("change", updateIsMobile);
-    return () => mediaQuery.removeEventListener("change", updateIsMobile);
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   const toggleWishlist = useCallback((id: number) => {
