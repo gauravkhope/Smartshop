@@ -48,8 +48,8 @@ const CategorySection: React.FC<CategorySectionProps> = ({
     addToCart(cartItem);
   }, [addToCart]);
 
-  // Only 5 products visible on homepage
-  const visibleProducts = products.slice(0, 5);
+  // Only 6 products visible on homepage
+  const visibleProducts = products.slice(0, 6);
 
   return (
     <section className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 mt-8 sm:mt-12">

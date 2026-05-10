@@ -817,7 +817,7 @@ export default function ProductDetailsPage() {
               )}
 
               {/* Delivery Checker */}
-              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4">
+              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 check-delivery">
                 <div className="flex items-center gap-2 mb-3">
                   <MapPin size={20} className="text-blue-500" />
                   <span className="font-semibold">Check Delivery</span>

@@ -132,7 +132,7 @@ export const sendRegistrationOtpEmail = async (
 
       linear-gradient(
         180deg,
-         rgba(79, 14, 47, 0.768) 0%,
+         rgba(88, 6, 48, 0.768) 0%,
         #090612 100%
       );
     }
@@ -402,7 +402,6 @@ export const sendRegistrationOtpEmail = async (
 
       white-space:nowrap;
 
-      font-size:0;
     }
 
     .digit{
@@ -864,125 +863,755 @@ export const sendPasswordResetCodeEmail = async (
       subject: "Password Reset OTP - SmartShop",
 
       htmlContent: `
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-          <meta charset="UTF-8" />
-          <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-          <title>SmartShop – Verify Your Account</title>
-          <style>
-            * { box-sizing: border-box; margin: 0; padding: 0; }
+       <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-            body {
-              background: #060410;
-              font-family: Arial, Helvetica, sans-serif;
-              min-height: 100vh;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              padding: 40px 16px;
-            }
+  <title>SmartShop OTP</title>
 
-            .orb1 { position: fixed; width: 400px; height: 400px; border-radius: 50%; background: radial-gradient(circle, rgba(124,58,237,0.45) 0%, transparent 70%); top: -100px; left: -80px; pointer-events: none; }
-            .orb2 { position: fixed; width: 350px; height: 350px; border-radius: 50%; background: radial-gradient(circle, rgba(236,72,153,0.38) 0%, transparent 70%); bottom: -80px; right: -60px; pointer-events: none; }
-            .orb3 { position: fixed; width: 220px; height: 220px; border-radius: 50%; background: radial-gradient(circle, rgba(99,102,241,0.25) 0%, transparent 70%); top: 45%; right: 8%; pointer-events: none; }
+  <style>
 
-            .scene { width: 100%; max-width: 560px; position: relative; }
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+    }
 
-            .card { position: relative; width: 100%; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.13); border-radius: 28px; overflow: hidden; backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); }
-            .card-inner-border { position: absolute; inset: 0; border-radius: 28px; border: 1px solid rgba(255,255,255,0.08); pointer-events: none; z-index: 1; }
+    body{
+      margin:0;
+      padding:0;
 
-            .header { padding: 2.5rem 2rem 2rem; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.07); position: relative; }
-            .header-shine { position: absolute; top: 0; left: 20%; right: 20%; height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent); }
-            .logo-mark { display: inline-flex; align-items: center; gap: 10px; }
-            .logo-icon { width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, #7c3aed, #ec4899); display: flex; align-items: center; justify-content: center; }
-            .logo-icon svg { width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-            .brand-name { font-size: 26px; font-weight: 700; color: #fff; letter-spacing: 0.4px; }
+      background:#05030d;
 
-            .body { padding: 0.5rem 2rem 0.75rem; }
-            .greeting-label { font-size: 11px; letter-spacing: 3px; color: rgba(255,255,255,0.35); text-transform: uppercase; margin-bottom: 8px; }
-            .heading { font-size: 26px; font-weight: 700; color: #fff; line-height: 1.3; margin-bottom: 1rem; }
-            .smallheading {display: flex; justify-content: center;  font-size: 30px; font-weight: 600; color: rgba(255,255,255,0.6); line-height: 1.4; margin-bottom: 1rem; }
-            .subtext { font-size: 14px; line-height: 1.8; color: rgba(255,255,255,0.5); }
-            .subtext strong { color: rgba(255,255,255,0.9); font-weight: 600; }
+      font-family:
+      Arial,
+      Helvetica,
+      sans-serif;
+    }
 
-            .divider { margin: 1.5rem 2rem; height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent); }
+    /* =========================
+       BACKGROUND
+    ========================== */
 
-            .otp-section { padding: 0 2rem 0.5rem; display: flex; justify-content: center; }
-            .otp-pill { width: 100%; position: relative; border-radius: 20px; padding: 1.75rem 1.5rem; text-align: center; background: linear-gradient(135deg, rgba(124,58,237,0.9), rgba(236,72,153,0.9)); border: 1px solid rgba(255,255,255,0.2); overflow: hidden; }
-            .otp-pill-shine { position: absolute; top: 0; left: 10%; right: 10%; height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent); }
-            .otp-label { font-size: 11px; letter-spacing: 3.5px; color: rgba(255,255,255,0.65); text-transform: uppercase; margin-bottom: 20px; }
+    .wrapper{
 
-            .otp-digits-row { display: flex; justify-content: center; align-items: center; gap: 8px; }
-            .digit-gap { width: 14px; }
+      width:100%;
 
-            .digit-card { width: 50px; height: 66px; position: relative; border-radius: 14px; background: rgba(255,255,255,0.12); border-top: 1px solid rgba(255,255,255,0.5); border-left: 1px solid rgba(255,255,255,0.25); border-right: 1px solid rgba(255,255,255,0.06); border-bottom: 1px solid rgba(255,255,255,0.04); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; transform: perspective(350px) rotateX(7deg) rotateY(-1deg); box-shadow: 0 1px 0 rgba(255,255,255,0.18) inset, 0 12px 28px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.3); }
-            .digit-num { font-size: 36px; font-weight: 700; color: #fff; font-family: 'Courier New', Courier, monospace; position: relative; z-index: 1; text-shadow: 0 1px 0 rgba(255,255,255,0.45), 0 -1px 0 rgba(0,0,0,0.5), 0 0 18px rgba(220,180,255,0.55), 0 4px 10px rgba(0,0,0,0.55); }
+      padding:26px 14px;
 
-            .otp-underline { margin-top: 18px; display: flex; justify-content: center; gap: 6px; }
-            .otp-dot { width: 28px; height: 3px; border-radius: 2px; background: rgba(255,255,255,0.3); }
+      background:
 
-            .info-section { padding: 1.25rem 2rem 1.75rem; display: flex; flex-direction: column; gap: 10px; }
-            .info-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; }
-            .info-text { font-size: 13px; color: rgba(255,255,255,0.5); line-height: 1.5; }
+      radial-gradient(
+        circle at 25% 16%,
+        rgba(124,58,237,0.38),
+        transparent 24%
+      ),
 
-            .footer { border-top: 1px solid rgba(255,255,255,0.07); padding: 1.25rem 2rem; text-align: center; position: relative; }
-            .footer-text { font-size: 12px; color: rgba(255,255,255,0.25); line-height: 1.9; }
-            .footer-dots { display: flex; justify-content: center; gap: 5px; margin-top: 10px; }
-            .footer-dot { width: 4px; height: 4px; border-radius: 50%; background: rgba(255,255,255,0.15); }
-            .footer-dot.active { background: rgba(124,58,237,0.75); }
-          </style>
-        </head>
-        <body>
-          <div class="orb1"></div>
-          <div class="orb2"></div>
-          <div class="orb3"></div>
+      radial-gradient(
+        circle at 75% 18%,
+        rgba(236,72,153,0.28),
+        transparent 24%
+      ),
 
-          <div class="scene">
-            <div class="card">
-              <div class="card-inner-border"></div>
-              <div class="header">
-                <div class="header-shine"></div>
-                <div class="logo-mark">
-                  <div class="logo-icon">
-                    <svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-                  </div>
-                  <span class="brand-name">SmartShop</span>
-                </div>
-              </div>
+      radial-gradient(
+        circle at 25% 80%,
+        rgba(236,72,153,0.22),
+        transparent 22%
+      ),
 
-              <div class="body">
-              <div class="smallheading">Password Reset OTP</div>
-                <div class="greeting-label">Secure verification</div>
-                <div class="heading">Verify your account</div>
-                <div class="subtext">Hello <strong>${displayName}</strong>,<br/>Use the secure verification code below to reset your password.</div>
-              </div>
+      radial-gradient(
+        circle at 75% 80%,
+        rgba(124,58,237,0.24),
+        transparent 22%
+      ),
 
-              <div class="divider"></div>
+      linear-gradient(
+        180deg,
+         rgba(88, 6, 48, 0.768) 0%,
+        #090612 100%
+      );
+    }
 
-              <div class="otp-section">
-                <div class="otp-pill">
-                  <div class="otp-pill-shine"></div>
-                  <div class="otp-label">One-time passcode</div>
-                  <div class="otp-digits-row">
-                    ${digitsHtml}
-                  </div>
-                  <div class="otp-underline">
-                    ${dotsHtml}
-                  </div>
-                </div>
-              </div>
+    /* =========================
+       MAIN CARD
+    ========================== */
 
-              <div class="info-section">
-                <div class="info-row"><div class="info-icon-wrap"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="info-text">Expires in <strong>10 minutes</strong> from the time it was sent</div></div>
-                <div class="info-row"><div class="info-icon-wrap"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><circle cx="12" cy="11" r="1" fill="rgba(255,255,255,0.7)" stroke="none"/><line x1="12" y1="12" x2="12" y2="15"/></svg></div><div class="info-text">Never share this code with anyone for security reasons</div></div>
-              </div>
+    .card{
 
-              <div class="footer"><div class="footer-text">© 2026 SmartShop. All rights reserved.</div><div class="footer-text">E-Commerce Platform</div><div class="footer-dots"><div class="footer-dot active"></div><div class="footer-dot"></div><div class="footer-dot"></div></div></div>
-            </div>
+      width:100%;
+      max-width:560px;
+
+      margin:0 auto;
+
+      border-radius:34px;
+
+      overflow:hidden;
+
+      position:relative;
+
+      background:
+      rgba(0, 0, 0, 0.115);
+
+      border:
+      1px solid rgba(255,255,255,0.12);
+
+      box-shadow:
+      0 24px 80px rgba(0,0,0,0.60);
+
+      backdrop-filter:blur(18px);
+      -webkit-backdrop-filter:blur(18px);
+    }
+
+    .card::before{
+
+      content:"";
+
+      position:absolute;
+      inset:0;
+
+      border-radius:34px;
+
+      border:
+      1px solid rgba(255,255,255,0.05);
+
+      pointer-events:none;
+    }
+
+    /* =========================
+       HEADER
+    ========================== */
+
+    .header{
+
+      padding:44px 34px 24px;
+
+      text-align:center;
+
+      position:relative;
+    }
+
+   .brand{
+
+  font-size:40px;
+  font-weight:800;
+
+  letter-spacing:1.5px;
+
+  /* FALLBACK COLOR FOR UNSUPPORTED EMAIL CLIENTS */
+
+  color:#f7c9d4;
+
+  /* LUXURY GRADIENT */
+
+  background:
+  linear-gradient(
+    135deg,
+    #fff8f1 0%,
+    #fde7dc 12%,
+    #f7c9d4 30%,
+    #f4aac4 48%,
+    #d4bbef 72%,
+    #b5a2d6 100%
+  );
+
+  /* GRADIENT TEXT */
+
+  -webkit-background-clip:text;
+  background-clip:text;
+
+  -webkit-text-fill-color:transparent;
+
+  /* SOFT LUXURY GLOW */
+
+  text-shadow:
+    0 0 6px rgba(192,132,252,0.18),
+    0 0 14px rgba(236,72,153,0.10),
+    0 2px 8px rgba(0,0,0,0.18);
+
+  /* FONT RENDERING */
+
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+
+  font-family:
+    "Segoe UI",
+    Arial,
+    sans-serif;
+}
+    .top-line{
+
+      width:100%;
+      height:1px;
+
+      margin-top:26px;
+
+      position:relative;
+
+      background:
+      linear-gradient(
+        90deg,
+        transparent,
+        rgba(255,255,255,0.10),
+        transparent
+      );
+    }
+
+    .top-line::after{
+
+      content:"";
+
+      width:42px;
+      height:2px;
+
+      border-radius:999px;
+
+      position:absolute;
+
+      left:50%;
+      top:-1px;
+
+      transform:translateX(-50%);
+
+      background:
+      linear-gradient(
+        90deg,
+        #7c3aed,
+        #ec4899
+      );
+
+      box-shadow:
+      0 0 16px rgba(236,72,153,0.70);
+    }
+
+    /* =========================
+       BODY
+    ========================== */
+
+    .body{
+
+      padding:24px 32px 10px;
+    }
+
+    .small-heading{
+
+      text-align:center;
+
+      font-size:28px;
+      font-weight:700;
+
+      color:
+      rgba(255,255,255,0.64);
+
+      margin-bottom:34px;
+    }
+
+    .verification-label{
+
+      font-size:16px;
+
+      letter-spacing:6px;
+
+      text-transform:uppercase;
+
+      color: rgba(255, 255, 255, 0.549);
+
+      margin-bottom:24px;
+    }
+
+    .main-heading{
+
+      font-size:34px;
+      font-weight:800;
+
+      color:#ffffff;
+
+      line-height:1.2;
+
+      margin-bottom:28px;
+    }
+
+    .subtext{
+
+      font-size:18px;
+
+      line-height:1.9;
+
+      color:
+      rgba(255,255,255,0.62);
+    }
+
+    .subtext strong{
+      color:orange;
+    }
+
+    /* =========================
+       OTP BOX
+    ========================== */
+
+    .otp-section{
+
+      padding:28px 24px 18px;
+    }
+
+    .otp-box{
+
+      border-radius:30px;
+
+      padding:36px 16px 28px;
+
+      text-align:center;
+
+      background:
+      linear-gradient(
+        135deg,
+        rgba(76,29,149,0.95),
+        rgba(236,72,153,0.92)
+      );
+
+      border:
+      1px solid rgba(255,255,255,0.14);
+
+      box-shadow:
+      0 18px 50px rgba(124,58,237,0.28);
+    }
+
+    .otp-label{
+
+      font-size:14px;
+
+      letter-spacing:6px;
+
+      text-transform:uppercase;
+
+      color:
+      rgba(255,255,255,0.82);
+
+      margin-bottom:34px;
+    }
+
+    /* OTP ROW */
+
+    .otp-row{
+
+      text-align:center;
+
+      white-space:nowrap;
+
+    }
+
+    .digit{
+
+      width:44px;
+      height:54px;
+
+      display:inline-block;
+
+      vertical-align:top;
+
+      line-height:64px;
+
+      margin:0 4px;
+
+      border-radius:12px;
+
+      font-size:32px;
+      font-weight:600;
+
+      color:#ffffff;
+
+      background:
+      rgba(255,255,255,0.12);
+
+      border:
+      1px solid rgba(255,255,255,0.14);
+
+      box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.10),
+      0 12px 24px rgba(0,0,0,0.24);
+
+      text-shadow:
+      0 0 14px rgba(255,255,255,0.22);
+    }
+
+    /* OTP UNDERLINE */
+
+    .otp-underlines{
+
+      margin-top:26px;
+
+      text-align:center;
+    }
+
+    .line{
+
+      width:38px;
+      height:4px;
+
+      display:inline-block;
+
+      margin:0 4px;
+
+      border-radius:999px;
+
+      background:
+      rgba(255,255,255,0.34);
+    }
+
+    /* =========================
+       INFO SECTION
+    ========================== */
+
+    .info-section{
+
+      padding:16px 24px 28px;
+    }
+
+    .info-card{
+
+      width:100%;
+
+      border-radius:18px;
+
+      padding:20px 24px;
+
+      margin-bottom:18px;
+
+      background:
+      rgba(255,255,255,0.03);
+
+      border:
+      1px solid rgba(255,255,255,0.08);
+    }
+
+    .info-text{
+
+      font-size:16px;
+
+      line-height:1.8;
+
+      color:
+      rgba(255,255,255,0.72);
+    }
+
+    .info-text strong{
+
+      color:#ff4fd8;
+    }
+
+    /* =========================
+       FOOTER
+    ========================== */
+
+    .footer{
+
+      padding:8px 24px 34px;
+
+      text-align:center;
+    }
+
+    .footer-line{
+
+      width:100%;
+      height:1px;
+
+      margin-bottom:26px;
+
+      position:relative;
+
+      background:
+      linear-gradient(
+        90deg,
+        transparent,
+        rgba(255,255,255,0.08),
+        transparent
+      );
+    }
+
+    .footer-line::after{
+
+      content:"";
+
+      width:44px;
+      height:2px;
+
+      border-radius:999px;
+
+      position:absolute;
+
+      left:50%;
+      top:-1px;
+
+      transform:translateX(-50%);
+
+      background:
+      linear-gradient(
+        90deg,
+        #7c3aed,
+        #ec4899
+      );
+
+      box-shadow:
+      0 0 16px rgba(236,72,153,0.70);
+    }
+
+    .footer-text{
+
+      font-size:15px;
+
+      line-height:1.9;
+
+      color:
+      rgba(255,255,255,0.42);
+    }
+
+    .footer-dots{
+
+      margin-top:18px;
+    }
+
+    .footer-dot{
+
+      width:12px;
+      height:12px;
+
+      display:inline-block;
+
+      margin:0 6px;
+
+      border-radius:50%;
+    }
+
+    .dot-purple{
+      background:#7c3aed;
+    }
+
+    .dot-pink{
+      background:#ec529f;
+    }
+
+    /* =========================
+       MOBILE
+    ========================== */
+
+    @media only screen and (max-width:600px){
+
+      .wrapper{
+        padding:14px 10px 22px;
+      }
+
+      .card{
+        border-radius:28px;
+      }
+
+      .header{
+        padding:34px 22px 20px;
+      }
+
+      .brand{
+        font-size:32px;
+      }
+
+      .body{
+        padding:20px 22px 8px;
+      }
+
+      .small-heading{
+        font-size:22px;
+        margin-bottom:26px;
+      }
+
+      .verification-label{
+        font-size:11px;
+        letter-spacing:4px;
+      }
+
+      .main-heading{
+        font-size:26px;
+      }
+
+      .subtext{
+        font-size:15px;
+        line-height:1.8;
+      }
+
+      .otp-section{
+        padding:24px 18px 14px;
+      }
+
+      .otp-box{
+        padding:26px 10px 22px;
+      }
+
+      .otp-label{
+        font-size:12px;
+        letter-spacing:4px;
+        margin-bottom:24px;
+      }
+
+      /* SMALLER OTP DIGITS */
+
+      .digit{
+
+        width:32px;
+        height:48px;
+
+        line-height:58px;
+
+        margin:0 2px;
+
+        font-size:26px;
+
+        border-radius:12px;
+      }
+
+      .line{
+        width:26px;
+        margin:0 2px;
+      }
+
+      .info-card{
+        padding:18px 18px;
+      }
+
+      .info-text{
+        font-size:14px;
+      }
+
+      .footer-text{
+        font-size:13px;
+      }
+
+    }
+
+  </style>
+</head>
+
+<body>
+
+  <div class="wrapper">
+
+    <div class="card">
+
+      <!-- HEADER -->
+
+      <div class="header">
+
+        <div class="brand">
+          SMARTSHOP
+        </div>
+
+        <div class="top-line"></div>
+
+      </div>
+
+      <!-- BODY -->
+
+      <div class="body">
+
+        <div class="small-heading">
+          Password Reset OTP
+        </div>
+
+        <div class="verification-label">
+          Secure Verification
+        </div>
+
+        <div class="main-heading">
+          Verify your account
+        </div>
+
+        <div class="subtext">
+          Hello <strong>${displayName}</strong>,<br/>
+          Welcome to SmartShop. Use the secure verification code below to continue your authentication process.
+        </div>
+
+      </div>
+
+      <!-- OTP -->
+
+      <div class="otp-section">
+
+        <div class="otp-box">
+
+          <div class="otp-label">
+            One-Time Passcode
           </div>
-        </body>
-        </html>
+
+          <div class="otp-row">
+
+            ${digitsHtml}
+
+          </div>
+
+          <div class="otp-underlines">
+
+            <span class="line"></span>
+            <span class="line"></span>
+            <span class="line"></span>
+            <span class="line"></span>
+            <span class="line"></span>
+            <span class="line"></span>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- INFO -->
+
+      <div class="info-section">
+
+        <div class="info-card">
+
+          <div class="info-text">
+            Expires in <strong>10 minutes</strong> from the time it was sent
+          </div>
+
+        </div>
+
+        <div class="info-card">
+
+          <div class="info-text">
+            Never share this code with anyone for security reasons
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- FOOTER -->
+
+      <div class="footer">
+
+        <div class="footer-line"></div>
+
+        <div class="footer-text">
+          © 2026 SmartShop. All rights reserved.
+        </div>
+
+        <div class="footer-text">
+          E-Commerce Platform
+        </div>
+
+        <div class="footer-dots">
+
+          <span class="footer-dot dot-purple"></span>
+          <span class="footer-dot dot-pink"></span>
+          <span class="footer-dot dot-purple"></span>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</body>
+</html>
       `,
     });
 
@@ -1019,610 +1648,524 @@ export const sendWelcomeEmail = async (
       subject: "Welcome to SmartShop 🎉",
 
       htmlContent: `
-        <!DOCTYPE html>
+   <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-  <title>Welcome to SmartShop</title>
+<title>Welcome to SmartShop</title>
 
-  <style>
+<style>
 
-    *{
-      margin:0;
-      padding:0;
-      box-sizing:border-box;
-    }
+  body{
+    margin:0;
+    padding:0;
 
-    body{
-      background:#05030d;
-      font-family:Arial, Helvetica, sans-serif;
+    background:#05030d;
 
-      min-height:100vh;
+    font-family:
+    Arial,
+    Helvetica,
+    sans-serif;
+  }
 
-      display:flex;
-      justify-content:center;
+  table{
+    border-spacing:0;
+  }
 
-      padding:60px 16px;
+  td{
+    padding:0;
+  }
 
-      overflow-x:hidden;
-      overflow-y:auto;
+  img{
+    border:0;
+  }
 
-      position:relative;
-    }
+  .wrapper{
+    width:100%;
 
-    /* =========================
-       BACKGROUND GLOW
-    ========================== */
+    padding:26px 14px;
 
-    .orb{
-      position:fixed;
-      border-radius:50%;
-      filter:blur(40px);
-      pointer-events:none;
-      z-index:0;
-    }
+    background:
 
-    .orb1{
-      width:450px;
-      height:450px;
-      top:-120px;
-      left:-120px;
+    radial-gradient(
+      circle at 25% 16%,
+      rgba(124,58,237,0.38),
+      transparent 24%
+    ),
 
-      background:
-      radial-gradient(circle,
-      rgba(124,58,237,0.45),
-      transparent 70%);
-    }
+    radial-gradient(
+      circle at 75% 18%,
+      rgba(236,72,153,0.28),
+      transparent 24%
+    ),
 
-    .orb2{
-      width:380px;
-      height:380px;
-      right:-80px;
-      bottom:-120px;
+    radial-gradient(
+      circle at 25% 80%,
+      rgba(236,72,153,0.22),
+      transparent 22%
+    ),
 
-      background:
-      radial-gradient(circle,
-      rgba(236,72,153,0.35),
-      transparent 70%);
-    }
+    radial-gradient(
+      circle at 75% 80%,
+      rgba(124,58,237,0.24),
+      transparent 22%
+    ),
 
-    .orb3{
-      width:240px;
-      height:240px;
-      top:45%;
-      right:8%;
+    linear-gradient(
+      180deg,
+      rgba(69, 9, 40, 0.768) 0%,
+      #090612 100%
+    );
+  }
 
-      background:
-      radial-gradient(circle,
-      rgba(99,102,241,0.25),
-      transparent 70%);
-    }
+  .main{
+    width:100%;
+    max-width:580px;
 
-    /* =========================
-       MAIN CONTAINER
-    ========================== */
+    margin:0 auto;
 
-    .scene{
-      width:100%;
-      max-width:580px;
+    background:transparent;
 
-      margin:auto;
+    border-radius:30px;
 
-      position:relative;
-      z-index:2;
-    }
+    overflow:hidden;
 
-    /* =========================
-       CARD
-    ========================== */
+    border:1px solid rgba(255,255,255,0.08);
 
-    .card{
-      position:relative;
+    box-shadow:
+    0 20px 60px rgba(0,0,0,0.45);
+  }
 
-      background:
-      rgba(255,255,255,0.05);
+  .top-line{
 
-      border:
-      1px solid rgba(255,255,255,0.10);
+  width:100%;
+  height:1px;
 
-      border-radius:34px;
+  margin-top:22px;
 
-      overflow:hidden;
-
-      backdrop-filter:blur(24px);
-      -webkit-backdrop-filter:blur(24px);
-
-      box-shadow:
-      0 20px 80px rgba(0,0,0,0.45);
-    }
-
-    .card::before{
-      content:"";
-
-      position:absolute;
-      inset:0;
-
-      border-radius:34px;
-
-      border:
-      1px solid rgba(255,255,255,0.06);
-
-      pointer-events:none;
-    }
-
-    /* =========================
-       HEADER
-    ========================== */
-
-    .header{
-      position:relative;
-
-      padding:42px 32px 34px;
-
-      text-align:center;
-
-      border-bottom:
-      1px solid rgba(255,255,255,0.06);
-    }
-
-    .header::before{
-      content:"";
-
-      position:absolute;
-      top:0;
-      left:20%;
-      right:20%;
-
-      height:1px;
-
-      background:
-      linear-gradient(
-      90deg,
-      transparent,
-      rgba(255,255,255,0.35),
-      transparent
-      );
-    }
-
-    .logo{
-      display:inline-flex;
-      align-items:center;
-      gap:12px;
-    }
-
-    .logo-icon{
-      width:46px;
-      height:46px;
-
-      border-radius:14px;
-
-      background:
-      linear-gradient(
-      135deg,
-      #7c3aed,
-      #ec4899
-      );
-
-      display:flex;
-      align-items:center;
-      justify-content:center;
-
-      box-shadow:
-      0 12px 30px rgba(124,58,237,0.35);
-    }
-
-    .logo-icon svg{
-      width:22px;
-      height:22px;
-
-      stroke:#fff;
-      fill:none;
-      stroke-width:2;
-    }
-
-    .brand{
   position:relative;
-
-  font-size:32px;
-  font-weight:800;
-
-  letter-spacing:0.5px;
 
   background:
   linear-gradient(
-    135deg,
-    rgba(255,255,255,0.98),
-    rgba(216,180,254,0.92),
-    rgba(249,168,212,0.88)
+    90deg,
+    transparent,
+    rgba(255,255,255,0.10),
+    transparent
   );
-
-  background-clip:text;
-  -webkit-background-clip:text;
-  -webkit-text-fill-color:transparent;
-
-  text-shadow:
-    0 2px 2px rgba(255,255,255,0.15),
-    0 8px 20px rgba(0,0,0,0.45),
-    0 0 20px rgba(255,255,255,0.10),
-    0 0 40px rgba(168,85,247,0.20);
-
-  filter:
-    drop-shadow(0 10px 20px rgba(0,0,0,0.35));
-
-  transform:
-    perspective(500px)
-    rotateX(8deg);
-
-  transform-style:preserve-3d;
 }
 
-    /* =========================
-       HERO
-    ========================== */
+.top-line::after{
 
-    .hero{
-      position:relative;
+  content:"";
 
-      padding:48px 34px 34px;
+  width:46px;
+  height:2px;
 
-      text-align:center;
-    }
+  border-radius:999px;
 
-    .hero-glow{
-      position:absolute;
+  position:absolute;
 
-      width:280px;
-      height:280px;
+  left:50%;
+  top:-1px;
 
-      border-radius:50%;
+  transform:translateX(-50%);
 
-      background:
-      radial-gradient(circle,
-      rgba(255,255,255,0.12),
-      transparent 70%);
+  background:
+  linear-gradient(
+    90deg,
+    #7c3aed,
+    #ec4899
+  );
 
-      top:-60px;
-      left:50%;
+  box-shadow:
+  0 0 14px rgba(236,72,153,0.55);
+}
 
-      transform:translateX(-50%);
+  /* =========================
+     HEADER
+  ========================== */
 
-      filter:blur(20px);
+  .header{
+    text-align:center;
 
-      pointer-events:none;
-    }
+    padding:40px 24px 30px;
 
-    .success-badge{
-      position:relative;
+    border-bottom:
+    1px solid rgba(255,255,255,0.06);
+  }
 
-      width:110px;
-      height:110px;
+  .logo-icon{
+    width:52px;
+    height:52px;
 
-      margin:0 auto 30px;
+    line-height:52px;
 
-      border-radius:50%;
+    margin:0 auto 18px;
 
-      background:
-      linear-gradient(
-      135deg,
-      rgba(124,58,237,0.95),
-      rgba(236,72,153,0.95)
-      );
+    border-radius:16px;
 
-      display:flex;
-      align-items:center;
-      justify-content:center;
+    text-align:center;
 
-      box-shadow:
-      0 20px 60px rgba(124,58,237,0.35),
-      inset 0 2px 4px rgba(255,255,255,0.35);
-    }
+    font-size:24px;
 
-    .success-badge::before{
-      content:"";
-
-      position:absolute;
-      inset:8px;
-
-      border-radius:50%;
-
-      border:
-      1px solid rgba(255,255,255,0.20);
-    }
-
-    .success-badge svg{
-      width:48px;
-      height:48px;
-
-      stroke:#fff;
-      fill:none;
-      stroke-width:2.5;
-
-      filter:
-      drop-shadow(0 5px 15px rgba(255,255,255,0.25));
-    }
-
-    .welcome-label{
-      font-size:11px;
-
-      text-transform:uppercase;
-
-      letter-spacing:4px;
-
-      color:rgba(255,255,255,0.38);
-
-      margin-bottom:14px;
-    }
-
-    .hero-title{
-      color:#fff;
-
-      font-size:52px;
-      font-weight:900;
-
-      line-height:1;
-
-      letter-spacing:-2px;
-
-      margin-bottom:20px;
-    }
-
-    .hero-title span{
-      background:
-      linear-gradient(
-      135deg,
-      #f1b38d 0%,
-      #f4b0a8 12%,
-      #ef5986 32%,
-      #f74e6d 55%,
-      #ac65f3 75%,
-      #7e51e8 100%
-      );
-
-      background-clip: text;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .hero-description{
-      max-width:470px;
-
-      margin:0 auto;
-
-      color:rgba(255,255,255,0.58);
-
-      font-size:15px;
-
-      line-height:1.9;
-    }
-
-    .hero-description strong{
-      color:#fff;
-    }
-
-    /* =========================
-       FEATURES
-    ========================== */
-
-    .features{
-      padding:10px 34px 34px;
-
-      display:flex;
-      flex-direction:column;
-      gap:14px;
-    }
-
-    .feature-card{
-      display:flex;
-      align-items:flex-start;
-      gap:14px;
-
-      padding:18px;
-
-      border-radius:20px;
-
-      background:
-      rgba(255,255,255,0.04);
-
-      border:
-      1px solid rgba(255,255,255,0.08);
-
-      backdrop-filter:blur(12px);
-    }
-
-    .feature-icon{
-      width:48px;
-      height:48px;
-
-      flex-shrink:0;
-
-      border-radius:14px;
-
-      background:
-      linear-gradient(
-      135deg,
-      rgba(124,58,237,0.25),
-      rgba(236,72,153,0.25)
-      );
-
-      border:
-      1px solid rgba(255,255,255,0.10);
-
-      display:flex;
-      align-items:center;
-      justify-content:center;
-    }
-
-    .feature-icon svg{
-      width:22px;
-      height:22px;
-
-      stroke:#fff;
-      fill:none;
-      stroke-width:2;
-    }
-
-    .feature-title{
-      color:#fff;
-
-      font-size:16px;
-      font-weight:700;
-
-      margin-bottom:6px;
-    }
-
-    .feature-text{
-      color:rgba(255,255,255,0.55);
-
-      font-size:14px;
-
-      line-height:1.7;
-    }
-
-    /* =========================
-       CTA
-    ========================== */
-
-    .cta-section{
-      padding:0 34px 40px;
-
-      text-align:center;
-    }
-
-    .cta-button{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-
-      gap:10px;
-
-      width:100%;
-
-      max-width:320px;
-
-      padding:18px 24px;
-
-      border-radius:18px;
-
-      text-decoration:none;
-
-      color:#fff;
-
-      font-size:15px;
-      font-weight:700;
-
-      background:
-      linear-gradient(
+    background:
+    linear-gradient(
       135deg,
       #7c3aed,
       #ec4899
+    );
+
+    color:#ffffff;
+
+    font-weight:700;
+  }
+
+  .brand{
+
+    font-size:32px;
+    font-weight:800;
+
+    letter-spacing:0.5px;
+
+    color:#f9a6d1;
+
+    text-shadow:
+      0 2px 8px rgba(0,0,0,0.35),
+      0 0 12px rgba(168,85,247,0.12);
+
+    font-family:
+      "Segoe UI",
+      Arial,
+      sans-serif;
+  }
+
+  /* =========================
+     HERO
+  ========================== */
+
+  .hero{
+    text-align:center;
+
+    padding:46px 30px 34px;
+  }
+
+  .success-circle{
+    width:100px;
+    height:100px;
+
+    line-height:100px;
+
+    margin:0 auto 30px;
+
+    border-radius:50%;
+
+    font-size:42px;
+
+    color:#ffffff;
+
+    font-weight:bold;
+
+    background:
+    linear-gradient(
+      135deg,
+      #7c3aed,
+      #ec4899
+    );
+
+    box-shadow:
+    0 14px 40px rgba(124,58,237,0.32);
+  }
+
+  .welcome-label{
+
+    font-size:16px;
+    font-weight: 400;
+
+    text-transform:uppercase;
+
+    letter-spacing:4px;
+
+    color:
+    rgba(255, 255, 255, 0.462);
+
+    margin-bottom:14px;
+  }
+
+  .hero-title{
+
+    color:#ffffff;
+
+    font-size:48px;
+    font-weight:900;
+
+    line-height:1.1;
+
+    margin-bottom:22px;
+  }
+.hero-title span{
+
+  /* FALLBACK COLOR */
+
+  color:rgb(255, 192, 76);
+}
+
+  .hero-description{
+
+    max-width:470px;
+
+    margin:0 auto;
+
+    color:
+    rgba(255,255,255,0.62);
+
+    font-size:15px;
+
+    line-height:1.9;
+  }
+
+  .hero-description strong{
+    color:orange;
+  }
+
+  /* =========================
+     FEATURES
+  ========================== */
+
+  .features{
+    padding:0 24px 20px;
+  }
+
+  .feature-card{
+
+    background:#171125;
+
+    border:
+    1px solid rgba(255,255,255,0.08);
+
+    border-radius:20px;
+
+    padding:18px;
+
+    margin-bottom:16px;
+  }
+
+  .feature-icon{
+
+    width:44px;
+    height:44px;
+
+    line-height:44px;
+
+    text-align:center;
+
+    border-radius:14px;
+
+    font-size:20px;
+
+    margin-bottom:14px;
+
+    background:
+    linear-gradient(
+      135deg,
+      rgba(124,58,237,0.22),
+      rgba(236,72,153,0.22)
+    );
+
+    color:#ffffff;
+  }
+
+  .feature-title{
+
+    color:#ffffff;
+
+    font-size:16px;
+    font-weight:700;
+
+    margin-bottom:8px;
+  }
+
+  .feature-text{
+
+    color:
+    rgba(255,255,255,0.58);
+
+    font-size:14px;
+
+    line-height:1.8;
+  }
+
+  /* =========================
+     BUTTON
+  ========================== */
+
+  .cta-section{
+    text-align:center;
+
+    padding:10px 24px 40px;
+  }
+
+  .cta-button{
+
+    display:inline-block;
+
+    background:
+    linear-gradient(
+      135deg,
+      #7c3aed,
+      #ec4899
+    );
+
+    color:#ffffff !important;
+
+    text-decoration:none;
+
+    font-size:15px;
+    font-weight:700;
+
+    padding:18px 34px;
+
+    border-radius:16px;
+
+    box-shadow:
+    0 14px 30px rgba(124,58,237,0.30);
+  }
+
+  /* =========================
+     FOOTER
+  ========================== */
+
+  .footer{
+
+    text-align:center;
+
+    padding:28px 20px 34px;
+
+    border-top:
+    1px solid rgba(255,255,255,0.06);
+  }
+  .footer-line{
+
+      width:100%;
+      height:1px;
+
+      margin-bottom:26px;
+
+      position:relative;
+
+      background:
+      linear-gradient(
+        90deg,
+        transparent,
+        rgba(255,255,255,0.08),
+        transparent
+      );
+    }
+
+    .footer-line::after{
+
+      content:"";
+
+      width:44px;
+      height:2px;
+
+      border-radius:999px;
+
+      position:absolute;
+
+      left:50%;
+      top:-1px;
+
+      transform:translateX(-50%);
+
+      background:
+      linear-gradient(
+        90deg,
+        #7c3aed,
+        #ec4899
       );
 
       box-shadow:
-      0 20px 40px rgba(124,58,237,0.35),
-      inset 0 1px 1px rgba(255,255,255,0.25);
+      0 0 16px rgba(236,72,153,0.70);
     }
 
-    .cta-button svg{
-      width:18px;
-      height:18px;
+  .footer p{
 
-      stroke:#fff;
-      fill:none;
-      stroke-width:2;
+    color:
+    rgba(255,255,255,0.32);
+
+    font-size:12px;
+
+    line-height:1.9;
+
+    margin:0;
+  }
+
+  /* =========================
+     MOBILE
+  ========================== */
+
+  @media only screen and (max-width:600px){
+
+    .hero{
+      padding:38px 20px 28px;
     }
 
-    /* =========================
-       FOOTER
-    ========================== */
-
-    .footer{
-      border-top:
-      1px solid rgba(255,255,255,0.06);
-
-      text-align:center;
-
-      padding:28px;
+    .hero-title{
+      font-size:36px;
     }
 
-    .footer p{
-      color:rgba(255,255,255,0.28);
+    .success-circle{
+      width:84px;
+      height:84px;
+      line-height:84px;
 
-      font-size:12px;
-
-      line-height:1.9;
+      font-size:36px;
     }
 
-    /* =========================
-       RESPONSIVE
-    ========================== */
-
-    @media(max-width:600px){
-
-      .hero-title{
-        font-size:40px;
-      }
-
-      .success-badge{
-        width:90px;
-        height:90px;
-      }
-
-      .success-badge svg{
-        width:40px;
-        height:40px;
-      }
-
+    .brand{
+      font-size:28px;
     }
 
-  </style>
+  }
+
+</style>
 </head>
 
 <body>
 
-  <!-- BACKGROUND -->
-  <div class="orb orb1"></div>
-  <div class="orb orb2"></div>
-  <div class="orb orb3"></div>
+<div class="wrapper">
 
-  <!-- MAIN -->
-  <div class="scene">
+  <table
+    class="main"
+    align="center"
+    width="100%"
+    cellpadding="0"
+    cellspacing="0"
+    border="0"
+  >
 
-    <div class="card">
+    <!-- HEADER -->
 
-      <!-- HEADER -->
-      <div class="header">
+    <tr>
+      <td class="header">
 
-        <div class="logo">
 
-          <div class="logo-icon">
-
-            <svg viewBox="0 0 24 24">
-              <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
-              <line x1="3" y1="6" x2="21" y2="6"/>
-              <path d="M16 10a4 4 0 0 1-8 0"/>
-            </svg>
-
-          </div>
-
-          <div class="brand">SmartShop</div>
-
+        <div class="brand">
+          SmartShop
         </div>
+<div class="top-line"></div>
+      </td>
+    </tr>
 
-      </div>
+    <!-- HERO -->
 
-      <!-- HERO -->
-      <div class="hero">
+    <tr>
+      <td class="hero">
 
-        <div class="hero-glow"></div>
-
-        <div class="success-badge">
-
-          <svg viewBox="0 0 24 24">
-            <polyline points="20 6 9 17 4 12"/>
-          </svg>
-
+        <div class="success-circle">
+          ✓
         </div>
 
         <div class="welcome-label">
@@ -1645,32 +2188,27 @@ export const sendWelcomeEmail = async (
 
         </div>
 
-      </div>
+      </td>
+    </tr>
 
-      <!-- FEATURES -->
-      <div class="features">
+    <!-- FEATURES -->
+
+    <tr>
+      <td class="features">
 
         <div class="feature-card">
 
           <div class="feature-icon">
-
-            <svg viewBox="0 0 24 24">
-              <path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/>
-            </svg>
-
+            ★
           </div>
 
-          <div>
+          <div class="feature-title">
+            Personalized Experience
+          </div>
 
-            <div class="feature-title">
-              Personalized Experience
-            </div>
-
-            <div class="feature-text">
-              Smart recommendations and AI-powered product discovery
-              tailored specifically for your shopping preferences.
-            </div>
-
+          <div class="feature-text">
+            Smart recommendations and AI-powered product discovery
+            tailored specifically for your shopping preferences.
           </div>
 
         </div>
@@ -1678,24 +2216,16 @@ export const sendWelcomeEmail = async (
         <div class="feature-card">
 
           <div class="feature-icon">
-
-            <svg viewBox="0 0 24 24">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-            </svg>
-
+            🔒
           </div>
 
-          <div>
+          <div class="feature-title">
+            Secure & Protected
+          </div>
 
-            <div class="feature-title">
-              Secure & Protected
-            </div>
-
-            <div class="feature-text">
-              Enterprise-grade authentication and advanced security
-              systems keep your account and transactions protected.
-            </div>
-
+          <div class="feature-text">
+            Enterprise-grade authentication and advanced security
+            systems keep your account and transactions protected.
           </div>
 
         </div>
@@ -1703,58 +2233,50 @@ export const sendWelcomeEmail = async (
         <div class="feature-card">
 
           <div class="feature-icon">
-
-            <svg viewBox="0 0 24 24">
-              <path d="M3 12h18"/>
-              <path d="M12 3l9 9-9 9"/>
-            </svg>
-
+            ➜
           </div>
 
-          <div>
+          <div class="feature-title">
+            Seamless Shopping
+          </div>
 
-            <div class="feature-title">
-              Seamless Shopping
-            </div>
-
-            <div class="feature-text">
-              Experience ultra-fast browsing, premium UI interactions,
-              and a smooth modern checkout experience.
-            </div>
-
+          <div class="feature-text">
+            Experience ultra-fast browsing, premium UI interactions,
+            and a smooth modern checkout experience.
           </div>
 
         </div>
 
-      </div>
+      </td>
+    </tr>
 
-      <!-- CTA -->
-      <div class="cta-section">
+    <!-- CTA -->
+
+    <tr>
+      <td class="cta-section">
 
         <a href="#" class="cta-button">
-
-          SHOP NOW
-
-          
-            <path d="M5 12h14"/>
-            <path d="M13 5l7 7-7 7"/>
-          </svg>
-
+          SHOP NOW →
         </a>
 
-      </div>
+      </td>
+    </tr>
 
-      <!-- FOOTER -->
-      <div class="footer">
+    <!-- FOOTER -->
+    <tr>
+      <td class="footer">
+
+        <div class="footer-line"></div>
 
         <p>© 2026 SmartShop. All rights reserved.</p>
         <p>E-Commerce Platform</p>
 
-      </div>
+      </td>
+    </tr>
 
-    </div>
+  </table>
 
-  </div>
+</div>
 
 </body>
 </html>
