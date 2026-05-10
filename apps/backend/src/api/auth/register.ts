@@ -97,14 +97,24 @@ export default async function registerHandler(
       },
     });
 
-    // ✅ Cleanup OTP
-    await deleteOtp(normalizedEmail);
-
     // ✅ Send welcome email
     try {
       await sendWelcomeEmail(normalizedEmail, otpData.name);
     } catch (error) {
-      console.warn("⚠️ Welcome email failed (non-fatal):", error);
+      console.warn("⚠️ Welcome email failed (non-fatal):", {
+        email: normalizedEmail,
+        error,
+      });
+    }
+
+    // ✅ Cleanup OTP
+    try {
+      await deleteOtp(normalizedEmail);
+    } catch (error) {
+      console.warn("⚠️ OTP cleanup failed after account creation:", {
+        email: normalizedEmail,
+        error,
+      });
     }
 
     return res.status(200).json({

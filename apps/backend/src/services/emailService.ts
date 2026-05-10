@@ -20,6 +20,22 @@ const sender = {
   name: process.env.EMAIL_FROM_NAME || "SmartShop",
 };
 
+const otpDigitStyle =
+  "display:inline-block;width:48px;height:58px;vertical-align:middle;line-height:58px;border-radius:12px;font-size:34px;font-weight:600;color:#ffffff;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.14);box-shadow:inset 0 1px 0 rgba(255,255,255,0.10),0 12px 24px rgba(0,0,0,0.24);text-shadow:0 0 14px rgba(255,255,255,0.22);";
+
+const buildOtpCells = (verificationCode: string): string =>
+  String(verificationCode)
+    .split("")
+    .map((digit, index) => {
+      const spacer =
+        index === 3
+          ? '<td style="width:16px;font-size:0;line-height:0;">&nbsp;</td>'
+          : "";
+
+      return `${spacer}<td align="center" valign="middle" style="padding:0 4px;"><span style="${otpDigitStyle}">${digit}</span></td>`;
+    })
+    .join("");
+
 export const verifyEmailTransporter = async (): Promise<void> => {
   if (!process.env.BREVO_API_KEY) {
     throw new Error("BREVO_API_KEY is missing");
@@ -41,17 +57,7 @@ export const sendRegistrationOtpEmail = async (
   const displayName = toTitleCaseName(name);
 
   try {
-    const digits = String(verificationCode).split("");
-    const digitsHtml = digits
-      .map((d, i) => {
-        if (i === 3) {
-          return '<div class="digit-gap"></div>' + `<div class="digit-card"><span class="digit-num">${d}</span></div>`;
-        }
-        return `<div class="digit-card"><span class="digit-num">${d}</span></div>`;
-      })
-      .join("");
-
-    const dotsHtml = digits.map(() => `<div class="otp-dot"></div>`).join("");
+    const digitsHtml = buildOtpCells(verificationCode);
 
     const response = await brevo.transactionalEmails.sendTransacEmail({
       sender,
@@ -400,42 +406,10 @@ export const sendRegistrationOtpEmail = async (
 
       text-align:center;
 
+      font-size:0;
+
       white-space:nowrap;
 
-    }
-
-    .digit{
-
-      width:44px;
-      height:54px;
-
-      display:inline-block;
-
-      vertical-align:top;
-
-      line-height:64px;
-
-      margin:0 4px;
-
-      border-radius:12px;
-
-      font-size:32px;
-      font-weight:600;
-
-      color:#ffffff;
-
-      background:
-      rgba(255,255,255,0.12);
-
-      border:
-      1px solid rgba(255,255,255,0.14);
-
-      box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.10),
-      0 12px 24px rgba(0,0,0,0.24);
-
-      text-shadow:
-      0 0 14px rgba(255,255,255,0.22);
     }
 
     /* OTP UNDERLINE */
@@ -742,11 +716,21 @@ export const sendRegistrationOtpEmail = async (
             One-Time Passcode
           </div>
 
-          <div class="otp-row">
+          <table
+            class="otp-row"
+            role="presentation"
+            align="center"
+            cellpadding="0"
+            cellspacing="0"
+            border="0"
+            style="margin:0 auto;border-collapse:separate;border-spacing:0;white-space:nowrap;"
+          >
+            <tr>
 
             ${digitsHtml}
 
-          </div>
+            </tr>
+          </table>
 
           <div class="otp-underlines">
 
@@ -839,17 +823,7 @@ export const sendPasswordResetCodeEmail = async (
   const displayName = toTitleCaseName(name);
 
   try {
-    const digits = String(verificationCode).split("");
-    const digitsHtml = digits
-      .map((d, i) => {
-        if (i === 3) {
-          return '<div class="digit-gap"></div>' + `<div class="digit-card"><span class="digit-num">${d}</span></div>`;
-        }
-        return `<div class="digit-card"><span class="digit-num">${d}</span></div>`;
-      })
-      .join("");
-
-    const dotsHtml = digits.map(() => `<div class="otp-dot"></div>`).join('');
+    const digitsHtml = buildOtpCells(verificationCode);
     const response = await brevo.transactionalEmails.sendTransacEmail({
       sender,
 
@@ -1539,11 +1513,21 @@ export const sendPasswordResetCodeEmail = async (
             One-Time Passcode
           </div>
 
-          <div class="otp-row">
+          <table
+            class="otp-row"
+            role="presentation"
+            align="center"
+            cellpadding="0"
+            cellspacing="0"
+            border="0"
+            style="margin:0 auto;border-collapse:separate;border-spacing:0;white-space:nowrap;"
+          >
+            <tr>
 
             ${digitsHtml}
 
-          </div>
+            </tr>
+          </table>
 
           <div class="otp-underlines">
 
