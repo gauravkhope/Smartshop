@@ -9,10 +9,7 @@ const toTitleCaseName = (value: string): string =>
     .trim()
     .split(/\s+/)
     .filter(Boolean)
-    .map(
-      (part) =>
-        part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()
-    )
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
     .join(" ");
 
 const sender = {
@@ -36,7 +33,7 @@ export const verifyEmailTransporter = async (): Promise<void> => {
 export const sendRegistrationOtpEmail = async (
   to: string,
   name: string,
-  verificationCode: string
+  verificationCode: string,
 ) => {
   const displayName = toTitleCaseName(name);
 
@@ -45,7 +42,10 @@ export const sendRegistrationOtpEmail = async (
     const digitsHtml = digits
       .map((d, i) => {
         if (i === 3) {
-          return '<div class="digit-gap"></div>' + `<div class="digit-card"><span class="digit-num">${d}</span></div>`;
+          return (
+            '<div class="digit-gap"></div>' +
+            `<div class="digit-card"><span class="digit-num">${d}</span></div>`
+          );
         }
         return `<div class="digit-card"><span class="digit-num">${d}</span></div>`;
       })
@@ -66,104 +66,151 @@ export const sendRegistrationOtpEmail = async (
       subject: "Registration OTP - SmartShop",
 
       htmlContent: `
-       <!DOCTYPE html>
+      <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
   <title>SmartShop – Verify Your Account</title>
 
   <style>
 
     *{
-      box-sizing:border-box;
       margin:0;
       padding:0;
+      box-sizing:border-box;
     }
 
     body{
       background:#060410;
       font-family:Arial, Helvetica, sans-serif;
       margin:0;
-      padding:40px 16px;
-    }
-
-    table{
-      border-spacing:0;
-    }
-
-    td{
-      padding:0;
+      padding:18px 12px 28px;
     }
 
     .wrapper{
       width:100%;
-      table-layout:fixed;
-      background:#060410;
+      position:relative;
+      overflow:hidden;
     }
 
     /* =========================
-       BACKGROUND ORBS
+       DARK LUXURY GLOW BUBBLES
     ========================== */
 
-    .orb1{
+    .orb{
       position:absolute;
-      width:400px;
-      height:400px;
       border-radius:50%;
+      z-index:0;
+    }
+
+    /* PURPLE 1 */
+
+    .orb1{
+      width:280px;
+      height:280px;
+
+      top:-70px;
+      left:-70px;
 
       background:
       radial-gradient(
         circle,
-        rgba(124,58,237,0.45) 0%,
-        transparent 70%
+        rgba(124,58,237,0.42) 0%,
+        rgba(88,28,135,0.22) 34%,
+        rgba(20,16,32,0) 74%
       );
-
-      top:-100px;
-      left:-80px;
-
-      pointer-events:none;
-      z-index:0;
     }
+
+    /* PINK 1 */
 
     .orb2{
-      position:absolute;
-      width:350px;
-      height:350px;
-      border-radius:50%;
+      width:250px;
+      height:250px;
 
-      background:
-      radial-gradient(
-        circle,
-        rgba(236,72,153,0.38) 0%,
-        transparent 70%
-      );
-
-      bottom:-80px;
+      top:40px;
       right:-60px;
 
-      pointer-events:none;
-      z-index:0;
+      background:
+      radial-gradient(
+        circle,
+        rgba(236,72,153,0.34) 0%,
+        rgba(131,24,67,0.16) 34%,
+        rgba(20,16,32,0) 74%
+      );
     }
 
+    /* PURPLE 2 */
+
     .orb3{
-      position:absolute;
-      width:220px;
-      height:220px;
-      border-radius:50%;
+      width:230px;
+      height:230px;
+
+      top:320px;
+      left:-80px;
 
       background:
       radial-gradient(
         circle,
-        rgba(99,102,241,0.25) 0%,
-        transparent 70%
+        rgba(139,92,246,0.30) 0%,
+        rgba(67,56,202,0.14) 36%,
+        rgba(20,16,32,0) 76%
       );
+    }
 
-      top:45%;
-      right:8%;
+    /* PINK 2 */
 
-      pointer-events:none;
-      z-index:0;
+    .orb4{
+      width:280px;
+      height:280px;
+
+      top:420px;
+      right:-90px;
+
+      background:
+      radial-gradient(
+        circle,
+        rgba(244,114,182,0.28) 0%,
+        rgba(131,24,67,0.14) 36%,
+        rgba(20,16,32,0) 76%
+      );
+    }
+
+    /* PURPLE 3 */
+
+    .orb5{
+      width:240px;
+      height:240px;
+
+      bottom:120px;
+      left:-40px;
+
+      background:
+      radial-gradient(
+        circle,
+        rgba(168,85,247,0.30) 0%,
+        rgba(88,28,135,0.14) 36%,
+        rgba(20,16,32,0) 76%
+      );
+    }
+
+    /* PINK 3 */
+
+    .orb6{
+      width:300px;
+      height:300px;
+
+      bottom:-100px;
+      right:-70px;
+
+      background:
+      radial-gradient(
+        circle,
+        rgba(236,72,153,0.30) 0%,
+        rgba(131,24,67,0.14) 36%,
+        rgba(20,16,32,0) 76%
+      );
     }
 
     /* =========================
@@ -173,8 +220,10 @@ export const sendRegistrationOtpEmail = async (
     .scene{
       width:100%;
       max-width:560px;
-      position:relative;
+
       margin:0 auto;
+
+      position:relative;
       z-index:2;
     }
 
@@ -183,13 +232,12 @@ export const sendRegistrationOtpEmail = async (
     ========================== */
 
     .card{
-      position:relative;
       width:100%;
 
       background:#141020;
 
       border:
-      1px solid rgba(255,255,255,0.10);
+      1px solid rgba(255,255,255,0.08);
 
       border-radius:28px;
 
@@ -197,19 +245,22 @@ export const sendRegistrationOtpEmail = async (
 
       box-shadow:
       0 20px 60px rgba(0,0,0,0.45);
+
+      position:relative;
     }
 
-    .card-inner-border{
+    .card::before{
+      content:"";
+
       position:absolute;
       inset:0;
 
       border-radius:28px;
 
       border:
-      1px solid rgba(255,255,255,0.05);
+      1px solid rgba(255,255,255,0.04);
 
       pointer-events:none;
-      z-index:1;
     }
 
     /* =========================
@@ -217,22 +268,26 @@ export const sendRegistrationOtpEmail = async (
     ========================== */
 
     .header{
-      padding:2.5rem 2rem 2rem;
+      padding:32px 28px 26px;
 
       text-align:center;
 
       border-bottom:
-      1px solid rgba(255,255,255,0.07);
+      1px solid rgba(255,255,255,0.06);
 
       position:relative;
+
+      z-index:2;
     }
 
-    .header-shine{
+    .header::before{
+      content:"";
+
       position:absolute;
 
       top:0;
-      left:20%;
-      right:20%;
+      left:18%;
+      right:18%;
 
       height:1px;
 
@@ -245,15 +300,15 @@ export const sendRegistrationOtpEmail = async (
       );
     }
 
-    .logo-mark{
-      text-align:center;
-    }
-
     .logo-icon{
-      width:38px;
-      height:38px;
+      width:42px;
+      height:42px;
 
-      border-radius:10px;
+      display:inline-block;
+
+      vertical-align:middle;
+
+      border-radius:12px;
 
       background:
       linear-gradient(
@@ -262,23 +317,19 @@ export const sendRegistrationOtpEmail = async (
         #ec4899
       );
 
-      display:inline-block;
-
       text-align:center;
 
-      line-height:38px;
-
-      vertical-align:middle;
+      line-height:42px;
 
       box-shadow:
-      0 10px 24px rgba(124,58,237,0.30);
+      0 10px 24px rgba(124,58,237,0.28);
     }
 
     .logo-icon svg{
       width:20px;
       height:20px;
 
-      margin-top:9px;
+      margin-top:11px;
 
       fill:none;
       stroke:#fff;
@@ -294,12 +345,10 @@ export const sendRegistrationOtpEmail = async (
 
       margin-left:10px;
 
-      font-size:26px;
+      font-size:28px;
       font-weight:700;
 
       letter-spacing:0.4px;
-
-      color:#f3d7df;
 
       background:
       linear-gradient(
@@ -316,7 +365,7 @@ export const sendRegistrationOtpEmail = async (
       -webkit-text-fill-color:transparent;
 
       text-shadow:
-      0 2px 10px rgba(168,85,247,0.18);
+      0 2px 10px rgba(168,85,247,0.16);
     }
 
     /* =========================
@@ -324,20 +373,20 @@ export const sendRegistrationOtpEmail = async (
     ========================== */
 
     .body{
-      padding:0.5rem 2rem 0.75rem;
+      padding:24px 28px 14px;
+      position:relative;
+      z-index:2;
     }
 
     .smallheading{
       text-align:center;
 
-      font-size:30px;
+      font-size:26px;
       font-weight:600;
 
-      color:rgba(255,255,255,0.60);
+      color:rgba(255,255,255,0.58);
 
-      line-height:1.4;
-
-      margin-bottom:1rem;
+      margin-bottom:20px;
     }
 
     .greeting-label{
@@ -345,34 +394,34 @@ export const sendRegistrationOtpEmail = async (
 
       letter-spacing:3px;
 
-      color:rgba(255,255,255,0.35);
+      color:rgba(255,255,255,0.32);
 
       text-transform:uppercase;
 
-      margin-bottom:8px;
+      margin-bottom:10px;
     }
 
     .heading{
-      font-size:26px;
+      font-size:24px;
       font-weight:700;
 
       color:#fff;
 
       line-height:1.3;
 
-      margin-bottom:1rem;
+      margin-bottom:16px;
     }
 
     .subtext{
       font-size:14px;
 
-      line-height:1.8;
+      line-height:1.9;
 
-      color:rgba(255,255,255,0.5);
+      color:rgba(255,255,255,0.52);
     }
 
     .subtext strong{
-      color:rgba(255,255,255,0.9);
+      color:#fff;
       font-weight:600;
     }
 
@@ -381,17 +430,20 @@ export const sendRegistrationOtpEmail = async (
     ========================== */
 
     .divider{
-      margin:1.5rem 2rem;
-
       height:1px;
+
+      margin:18px 28px;
 
       background:
       linear-gradient(
         90deg,
         transparent,
-        rgba(255,255,255,0.1),
+        rgba(255,255,255,0.08),
         transparent
       );
+
+      position:relative;
+      z-index:2;
     }
 
     /* =========================
@@ -399,20 +451,19 @@ export const sendRegistrationOtpEmail = async (
     ========================== */
 
     .otp-section{
-      padding:0 2rem 0.5rem;
+      padding:0 28px 10px;
       text-align:center;
+
+      position:relative;
+      z-index:2;
     }
 
     .otp-pill{
       width:100%;
 
-      position:relative;
+      border-radius:24px;
 
-      border-radius:20px;
-
-      padding:1.75rem 1.5rem;
-
-      text-align:center;
+      padding:24px 12px 22px;
 
       background:
       linear-gradient(
@@ -422,15 +473,19 @@ export const sendRegistrationOtpEmail = async (
       );
 
       border:
-      1px solid rgba(255,255,255,0.15);
+      1px solid rgba(255,255,255,0.14);
+
+      position:relative;
 
       overflow:hidden;
 
       box-shadow:
-      0 18px 40px rgba(124,58,237,0.25);
+      0 18px 42px rgba(124,58,237,0.28);
     }
 
-    .otp-pill-shine{
+    .otp-pill::before{
+      content:"";
+
       position:absolute;
 
       top:0;
@@ -451,37 +506,42 @@ export const sendRegistrationOtpEmail = async (
     .otp-label{
       font-size:11px;
 
-      letter-spacing:3.5px;
-
-      color:rgba(255,255,255,0.65);
+      letter-spacing:4px;
 
       text-transform:uppercase;
+
+      color:rgba(255,255,255,0.72);
 
       margin-bottom:20px;
     }
 
     .otp-digits-row{
       text-align:center;
+      white-space:nowrap;
     }
 
     .digit-card{
-      width:50px;
-      height:66px;
+      width:44px;
+      height:58px;
 
       display:inline-block;
 
-      line-height:66px;
+      vertical-align:top;
+
+      line-height:58px;
+
+      margin:0 2px;
 
       border-radius:14px;
 
       background:
-      rgba(255,255,255,0.10);
+      rgba(255,255,255,0.12);
 
       border-top:
-      1px solid rgba(255,255,255,0.35);
+      1px solid rgba(255,255,255,0.30);
 
       border-left:
-      1px solid rgba(255,255,255,0.15);
+      1px solid rgba(255,255,255,0.12);
 
       border-right:
       1px solid rgba(255,255,255,0.05);
@@ -490,43 +550,36 @@ export const sendRegistrationOtpEmail = async (
       1px solid rgba(255,255,255,0.03);
 
       box-shadow:
-      0 10px 24px rgba(0,0,0,0.35),
-      inset 0 1px 0 rgba(255,255,255,0.12);
-
-      margin:0 4px;
+      0 10px 24px rgba(0,0,0,0.28),
+      inset 0 1px 0 rgba(255,255,255,0.10);
     }
 
     .digit-num{
-      font-size:36px;
+      font-size:32px;
       font-weight:700;
 
       color:#fff;
 
-      font-family:'Courier New', Courier, monospace;
+      font-family:'Courier New', monospace;
 
       text-shadow:
       0 0 12px rgba(220,180,255,0.35),
       0 4px 10px rgba(0,0,0,0.45);
     }
 
-    .digit-gap{
-      width:14px;
-      display:inline-block;
-    }
-
     .otp-underline{
       margin-top:18px;
-
       text-align:center;
     }
 
     .otp-dot{
-      width:28px;
+      width:22px;
       height:3px;
 
-      border-radius:2px;
+      border-radius:999px;
 
-      background:rgba(255,255,255,0.3);
+      background:
+      rgba(255,255,255,0.30);
 
       display:inline-block;
 
@@ -534,33 +587,36 @@ export const sendRegistrationOtpEmail = async (
     }
 
     /* =========================
-       INFO
+       INFO SECTION
     ========================== */
 
     .info-section{
-      padding:1.25rem 2rem 1.75rem;
+      padding:16px 28px 24px;
+
+      position:relative;
+      z-index:2;
     }
 
     .info-row{
-      padding:12px 14px;
-
       background:
       rgba(255,255,255,0.04);
 
       border:
       1px solid rgba(255,255,255,0.06);
 
-      border-radius:12px;
+      border-radius:14px;
 
-      margin-bottom:10px;
+      padding:14px 16px;
+
+      margin-bottom:12px;
     }
 
     .info-text{
-      font-size:13px;
+      font-size:14px;
 
-      color:rgba(255,255,255,0.5);
+      line-height:1.7;
 
-      line-height:1.5;
+      color:rgba(255,255,255,0.56);
     }
 
     .info-text strong{
@@ -573,25 +629,26 @@ export const sendRegistrationOtpEmail = async (
 
     .footer{
       border-top:
-      1px solid rgba(255,255,255,0.07);
+      1px solid rgba(255,255,255,0.06);
 
-      padding:1.25rem 2rem;
+      padding:24px 28px 28px;
 
       text-align:center;
+
+      position:relative;
+      z-index:2;
     }
 
     .footer-text{
       font-size:12px;
 
-      color:rgba(255,255,255,0.25);
-
       line-height:1.9;
+
+      color:rgba(255,255,255,0.24);
     }
 
     .footer-dots{
-      text-align:center;
-
-      margin-top:10px;
+      margin-top:12px;
     }
 
     .footer-dot{
@@ -600,15 +657,17 @@ export const sendRegistrationOtpEmail = async (
 
       border-radius:50%;
 
-      background:rgba(255,255,255,0.15);
-
       display:inline-block;
 
       margin:0 2px;
+
+      background:
+      rgba(255,255,255,0.16);
     }
 
     .footer-dot.active{
-      background:rgba(124,58,237,0.75);
+      background:
+      rgba(124,58,237,0.85);
     }
 
     /* =========================
@@ -617,22 +676,34 @@ export const sendRegistrationOtpEmail = async (
 
     @media only screen and (max-width:600px){
 
-      .heading{
+      .smallheading{
         font-size:24px;
       }
 
-      .smallheading{
-        font-size:26px;
+      .heading{
+        font-size:22px;
+      }
+
+      .subtext{
+        font-size:13px;
+        line-height:1.8;
+      }
+
+      .otp-pill{
+        padding:22px 10px 20px;
       }
 
       .digit-card{
-        width:42px;
-        height:58px;
-        line-height:58px;
+        width:40px;
+        height:54px;
+
+        line-height:54px;
+
+        margin:0 1px;
       }
 
       .digit-num{
-        font-size:30px;
+        font-size:28px;
       }
 
     }
@@ -644,38 +715,34 @@ export const sendRegistrationOtpEmail = async (
 
   <div class="wrapper">
 
-    <div class="orb1"></div>
-    <div class="orb2"></div>
-    <div class="orb3"></div>
+    <!-- GLOW BUBBLES -->
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="orb orb3"></div>
+    <div class="orb orb4"></div>
+    <div class="orb orb5"></div>
+    <div class="orb orb6"></div>
 
     <div class="scene">
 
       <div class="card">
 
-        <div class="card-inner-border"></div>
-
         <!-- HEADER -->
         <div class="header">
 
-          <div class="header-shine"></div>
+          <div class="logo-icon">
 
-          <div class="logo-mark">
-
-            <div class="logo-icon">
-
-              <svg viewBox="0 0 24 24">
-                <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
-                <line x1="3" y1="6" x2="21" y2="6"/>
-                <path d="M16 10a4 4 0 0 1-8 0"/>
-              </svg>
-
-            </div>
-
-            <span class="brand-name">
-              SmartShop
-            </span>
+            <svg viewBox="0 0 24 24">
+              <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <path d="M16 10a4 4 0 0 1-8 0"/>
+            </svg>
 
           </div>
+
+          <span class="brand-name">
+            SmartShop
+          </span>
 
         </div>
 
@@ -687,7 +754,7 @@ export const sendRegistrationOtpEmail = async (
           </div>
 
           <div class="greeting-label">
-            Secure verification
+            Secure Verification
           </div>
 
           <div class="heading">
@@ -708,10 +775,8 @@ export const sendRegistrationOtpEmail = async (
 
           <div class="otp-pill">
 
-            <div class="otp-pill-shine"></div>
-
             <div class="otp-label">
-              One-time passcode
+              One-Time Passcode
             </div>
 
             <div class="otp-digits-row">
@@ -722,7 +787,12 @@ export const sendRegistrationOtpEmail = async (
 
             <div class="otp-underline">
 
-              ${dotsHtml}
+              <span class="otp-dot"></span>
+              <span class="otp-dot"></span>
+              <span class="otp-dot"></span>
+              <span class="otp-dot"></span>
+              <span class="otp-dot"></span>
+              <span class="otp-dot"></span>
 
             </div>
 
@@ -764,9 +834,9 @@ export const sendRegistrationOtpEmail = async (
 
           <div class="footer-dots">
 
-            <div class="footer-dot active"></div>
-            <div class="footer-dot"></div>
-            <div class="footer-dot"></div>
+            <span class="footer-dot active"></span>
+            <span class="footer-dot"></span>
+            <span class="footer-dot"></span>
 
           </div>
 
@@ -780,7 +850,6 @@ export const sendRegistrationOtpEmail = async (
 
 </body>
 </html>
-
       `,
     });
 
@@ -800,7 +869,7 @@ export const sendRegistrationOtpEmail = async (
 export const sendPasswordResetCodeEmail = async (
   to: string,
   name: string,
-  verificationCode: string
+  verificationCode: string,
 ) => {
   const displayName = toTitleCaseName(name);
 
@@ -809,13 +878,16 @@ export const sendPasswordResetCodeEmail = async (
     const digitsHtml = digits
       .map((d, i) => {
         if (i === 3) {
-          return '<div class="digit-gap"></div>' + `<div class="digit-card"><span class="digit-num">${d}</span></div>`;
+          return (
+            '<div class="digit-gap"></div>' +
+            `<div class="digit-card"><span class="digit-num">${d}</span></div>`
+          );
         }
         return `<div class="digit-card"><span class="digit-num">${d}</span></div>`;
       })
       .join("");
 
-    const dotsHtml = digits.map(() => `<div class="otp-dot"></div>`).join('');
+    const dotsHtml = digits.map(() => `<div class="otp-dot"></div>`).join("");
     const response = await brevo.transactionalEmails.sendTransacEmail({
       sender,
 
@@ -964,10 +1036,7 @@ export const sendPasswordResetCodeEmail = async (
 // WELCOME EMAIL
 // ======================================
 
-export const sendWelcomeEmail = async (
-  to: string,
-  name: string
-) => {
+export const sendWelcomeEmail = async (to: string, name: string) => {
   try {
     const displayName = toTitleCaseName(name);
 
