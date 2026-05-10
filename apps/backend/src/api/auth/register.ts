@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import prisma from "../../lib/prisma";
 import bcrypt from "bcryptjs";
-import { sendRegistrationOtpEmail } from "../../services/emailService";
+import { sendRegistrationOtpEmail, sendWelcomeEmail } from "../../services/emailService";
 import {
   storeOtp,
   getOtpData,
@@ -99,6 +99,13 @@ export default async function registerHandler(
 
     // ✅ Cleanup OTP
     await deleteOtp(normalizedEmail);
+
+    // ✅ Send welcome email
+    try {
+      await sendWelcomeEmail(normalizedEmail, otpData.name);
+    } catch (error) {
+      console.warn("⚠️ Welcome email failed (non-fatal):", error);
+    }
 
     return res.status(200).json({
       message: "Account created successfully!",
