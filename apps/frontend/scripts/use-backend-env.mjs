@@ -7,7 +7,8 @@ const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "
 const modeArg = (process.argv[2] || process.env.BACKEND_ENV_MODE || "local").toLowerCase();
 const mode = modeArg === "deploy" ? "deploy" : "local";
 
-const sourcePath = path.join(projectRoot, "config", "backend-urls", `${mode}.env`);
+const sourceEnvFile = mode === "local" ? "localhost.env" : "deploy.env";
+const sourcePath = path.join(projectRoot, "config", "backend-urls", sourceEnvFile);
 const targetPath = path.join(projectRoot, ".env.local");
 
 try {
